@@ -1,0 +1,2470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Taboo — Mobile Party Edition</title>
+  <style>
+    /* ==========================================================================
+       DESIGN TOKENS & RESET (Mobile-First, Zero External Dependencies)
+       ========================================================================== */
+    :root {
+      --bg-void: #090B0E;
+      --bg-surface: #12161E;
+      --bg-card: #181E29;
+      --bg-elevated: #212938;
+      --border-subtle: #283142;
+      --border-strong: #3B475E;
+
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+
+      --crimson: #EF4444;
+      --crimson-deep: #B91C1C;
+      --crimson-bg: rgba(239, 68, 68, 0.14);
+      --crimson-border: rgba(239, 68, 68, 0.42);
+
+      --emerald: #10B981;
+      --emerald-deep: #059669;
+      --emerald-bg: rgba(16, 185, 129, 0.15);
+
+      --amber: #F59E0B;
+      --amber-bright: #FBBF24;
+
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-xl: 28px;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --shadow-card: 0 18px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background-color: var(--bg-void);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100dvh;
+      width: 100%;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    /* Centered Mobile Shell (Adapts cleanly to iPad & Desktop) */
+    .app-shell {
+      width: 100%;
+      max-width: 540px;
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding: 14px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    /* Screen Visibility Management */
+    .screen {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      gap: 14px;
+      animation: fadeSlideIn 0.22s ease-out;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       SHARED COMPONENTS
+       ========================================================================== */
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 2px;
+    }
+
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--crimson), var(--crimson-deep));
+      color: #fff;
+      font-weight: 900;
+      font-size: 1.3rem;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+    }
+
+    .brand-name {
+      font-size: 1.35rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .deck-pill {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--text-secondary);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 11px;
+      border-radius: 99px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+    }
+
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-primary {
+      min-height: 64px;
+      font-size: 1.2rem;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, var(--emerald), var(--emerald-deep));
+      border-color: #34D399;
+      color: #042F1E;
+      font-weight: 900;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+      width: 100%;
+    }
+
+    .btn-crimson {
+      background: linear-gradient(135deg, var(--crimson), var(--crimson-deep));
+      border-color: #FCA5A5;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
+    }
+
+    .btn-sm {
+      min-height: 38px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      border-radius: var(--radius-sm);
+    }
+
+    /* ==========================================================================
+       SCREEN 1: SETUP & SCOREBOARD HOME
+       ========================================================================== */
+    .team-count-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .chip-btn {
+      min-height: 42px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-void);
+      color: var(--text-secondary);
+      font-weight: 800;
+      font-size: 0.92rem;
+      cursor: pointer;
+    }
+
+    .chip-btn.active {
+      background: rgba(245, 158, 11, 0.16);
+      border-color: var(--amber);
+      color: var(--amber-bright);
+    }
+
+    .teams-editor {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .team-input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-void);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+    }
+
+    .team-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .team-name-field {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 1.05rem;
+      font-weight: 800;
+      min-height: 36px;
+      outline: none;
+      user-select: text;
+    }
+
+    .team-score-pill {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--amber-bright);
+      background: var(--bg-elevated);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-presets {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .custom-sec-row {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .custom-sec-row.visible {
+      display: flex;
+    }
+
+    .custom-sec-input {
+      flex: 1;
+      min-height: 44px;
+      background: var(--bg-void);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-align: center;
+      user-select: text;
+    }
+
+    .utility-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* ==========================================================================
+       SCREEN 2: PASS-AND-PLAY PRIVACY COVER
+       ========================================================================== */
+    .privacy-screen {
+      justify-content: space-between;
+      text-align: center;
+    }
+
+    .privacy-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      background: radial-gradient(circle at top, #1E2636, var(--bg-surface) 75%);
+      border: 2px solid var(--border-strong);
+      border-radius: var(--radius-xl);
+      padding: 28px 20px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .turn-badge {
+      font-size: 0.85rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 99px;
+      background: rgba(245, 158, 11, 0.16);
+      color: var(--amber-bright);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .privacy-team-title {
+      font-size: clamp(2rem, 8vw, 2.7rem);
+      font-weight: 900;
+      line-height: 1.1;
+      color: var(--text-primary);
+    }
+
+    .privacy-instructions {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      max-width: 340px;
+      line-height: 1.45;
+    }
+
+    .mini-scoreboard {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .mini-score-chip {
+      background: var(--bg-void);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-score-chip.active-team {
+      border-color: var(--amber);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    /* ==========================================================================
+       SCREEN 3: ACTIVE TURN (TABOO CARD + 2 THUMB BUTTONS)
+       ========================================================================== */
+    .active-hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      gap: 8px;
+    }
+
+    .hud-team {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .hud-team-name {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hud-turn-score {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: var(--emerald);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hud-timer {
+      font-size: 2.35rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      color: var(--text-primary);
+      padding: 4px 12px;
+      border-radius: 12px;
+      background: var(--bg-void);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .hud-timer.urgent {
+      color: var(--crimson);
+      border-color: var(--crimson);
+      animation: pulseRed 0.65s infinite alternate;
+    }
+
+    @keyframes pulseRed {
+      from { transform: scale(1); }
+      to { transform: scale(1.06); box-shadow: 0 0 18px rgba(239, 68, 68, 0.5); }
+    }
+
+    /* THE TABOO CARD */
+    .taboo-card-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .taboo-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 2px solid var(--border-strong);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.16s ease, opacity 0.16s ease;
+    }
+
+    .taboo-card.card-pop {
+      animation: cardPop 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes cardPop {
+      0% { transform: scale(0.95) translateX(14px); opacity: 0.5; }
+      100% { transform: scale(1) translateX(0); opacity: 1; }
+    }
+
+    .target-word-header {
+      background: linear-gradient(180deg, #252E3F, #1B2230);
+      padding: clamp(20px, 4vh, 30px) 18px;
+      text-align: center;
+      border-bottom: 3px solid var(--crimson);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .target-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--amber-bright);
+    }
+
+    .target-word-text {
+      font-size: clamp(2rem, 7.8vw, 2.85rem);
+      font-weight: 900;
+      color: #FFFFFF;
+      line-height: 1.12;
+      letter-spacing: -0.01em;
+      word-break: break-word;
+    }
+
+    .forbidden-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      padding: 12px 18px;
+      gap: 8px;
+    }
+
+    .forbidden-word-item {
+      background: var(--crimson-bg);
+      border: 1px solid var(--crimson-border);
+      border-radius: var(--radius-md);
+      padding: clamp(10px, 2vh, 14px) 16px;
+      text-align: center;
+      font-size: clamp(1.3rem, 5.2vw, 1.72rem);
+      font-weight: 800;
+      color: #FECACA;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .forbidden-ban-dot {
+      color: var(--crimson);
+      font-size: 1rem;
+      font-weight: 900;
+    }
+
+    /* Paused Overlay on Card */
+    .pause-veil {
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 11, 14, 0.94);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius-xl);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 20;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .pause-veil.visible {
+      display: flex;
+    }
+
+    /* TWO THUMB-FRIENDLY BOTTOM ACTION BUTTONS */
+    .thumb-actions {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 12px;
+      padding-top: 2px;
+    }
+
+    .btn-skip {
+      min-height: 76px;
+      border-radius: var(--radius-lg);
+      background: var(--bg-elevated);
+      border: 2px solid var(--crimson-border);
+      color: #FCA5A5;
+      font-size: 1.15rem;
+      font-weight: 900;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      transition: transform 0.08s ease, background 0.12s ease;
+    }
+
+    .btn-skip:active {
+      transform: scale(0.95);
+      background: rgba(239, 68, 68, 0.22);
+    }
+
+    .btn-got-it {
+      min-height: 76px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--emerald), var(--emerald-deep));
+      border: 2px solid #6EE7B7;
+      color: #032719;
+      font-size: 1.35rem;
+      font-weight: 900;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      box-shadow: 0 10px 26px rgba(16, 185, 129, 0.35);
+      cursor: pointer;
+      transition: transform 0.08s ease;
+    }
+
+    .btn-got-it:active {
+      transform: scale(0.95);
+    }
+
+    .btn-subtext {
+      font-size: 0.72rem;
+      font-weight: 800;
+      opacity: 0.85;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ==========================================================================
+       SCREEN 4: END-OF-TURN SUMMARY & DISPUTE TOGGLE
+       ========================================================================== */
+    .summary-header {
+      text-align: center;
+      padding: 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+    }
+
+    .summary-points-big {
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: var(--emerald);
+      line-height: 1.1;
+    }
+
+    .turn-log-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 330px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .log-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .log-word {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .log-toggle-btn {
+      min-height: 38px;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .log-toggle-btn.got {
+      background: var(--emerald-bg);
+      color: #6EE7B7;
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .log-toggle-btn.skipped {
+      background: var(--crimson-bg);
+      color: #FCA5A5;
+      border-color: var(--crimson-border);
+    }
+
+    /* Modal & Toast */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 10, 0.85);
+      backdrop-filter: blur(6px);
+      z-index: 900;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-xl);
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 85dvh;
+      overflow-y: auto;
+    }
+
+    .toast {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-140%);
+      background: var(--bg-elevated);
+      border: 1px solid var(--amber);
+      color: var(--text-primary);
+      padding: 10px 20px;
+      border-radius: 99px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      z-index: 1100;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      transition: transform 0.25s ease;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toast" class="toast"></div>
+
+  <div class="app-shell">
+    <!-- ======================================================================
+         SCREEN 1: SETUP & SCOREBOARD
+         ====================================================================== -->
+    <section id="setupScreen" class="screen active">
+      <div class="top-nav">
+        <div class="brand-lockup">
+          <div class="brand-icon">T</div>
+          <div class="brand-name">Taboo</div>
+        </div>
+        <div id="deckCounterPill" class="deck-pill">630 / 630 left</div>
+      </div>
+
+      <!-- Teams & Live Scoreboard -->
+      <div class="panel">
+        <div class="section-label">
+          <span>Teams &amp; Scoreboard</span>
+          <button class="btn btn-sm" onclick="openConfirmModal('scores')">Reset Scores</button>
+        </div>
+
+        <div class="team-count-row">
+          <button class="chip-btn active" data-teams="2" onclick="setTeamCount(2)">2 Teams</button>
+          <button class="chip-btn" data-teams="3" onclick="setTeamCount(3)">3 Teams</button>
+          <button class="chip-btn" data-teams="4" onclick="setTeamCount(4)">4 Teams</button>
+        </div>
+
+        <div id="teamsEditor" class="teams-editor"></div>
+      </div>
+
+      <!-- Turn Timer Settings -->
+      <div class="panel">
+        <div class="section-label">
+          <span>Turn Timer</span>
+          <span id="selectedTimerLabel" style="color: var(--amber-bright);">60 Seconds</span>
+        </div>
+
+        <div class="timer-presets">
+          <button class="chip-btn" data-sec="45" onclick="setTurnDuration(45)">45s</button>
+          <button class="chip-btn active" data-sec="60" onclick="setTurnDuration(60)">60s</button>
+          <button class="chip-btn" data-sec="90" onclick="setTurnDuration(90)">90s</button>
+          <button class="chip-btn" data-sec="120" onclick="setTurnDuration(120)">120s</button>
+          <button class="chip-btn" id="customChipBtn" onclick="toggleCustomSecInput()">Custom</button>
+        </div>
+
+        <div id="customSecRow" class="custom-sec-row">
+          <input id="customSecInput" type="number" class="custom-sec-input" min="15" max="300" value="75" placeholder="Seconds" />
+          <button class="btn btn-sm" onclick="applyCustomSeconds()">Set</button>
+        </div>
+      </div>
+
+      <!-- Audio, Rules & Deck Reset -->
+      <div class="utility-grid">
+        <button id="soundToggleBtn" class="btn" onclick="toggleMute()">
+          <span id="soundIcon">🔊</span>
+          <span id="soundLabel">Sound: On</span>
+        </button>
+        <button class="btn" onclick="openModal('rulesModal')">
+          <span>📜</span>
+          <span>How to Play</span>
+        </button>
+        <button class="btn" style="grid-column: span 2;" onclick="openConfirmModal('deck')">
+          <span>🔄</span>
+          <span>Reset Played Deck (630 Cards)</span>
+        </button>
+      </div>
+
+      <button class="btn btn-primary" onclick="goToPrivacyScreen()">
+        Play Next Turn &rarr;
+      </button>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 2: PASS-AND-PLAY PRIVACY COVER
+         ====================================================================== -->
+    <section id="privacyScreen" class="screen privacy-screen">
+      <div class="top-nav">
+        <button class="btn btn-sm" onclick="showScreen('setupScreen')">&larr; Setup &amp; Scores</button>
+        <div id="privacyDeckPill" class="deck-pill">630 left</div>
+      </div>
+
+      <div class="privacy-card">
+        <div class="turn-badge">Up Next</div>
+        <div id="privacyTeamName" class="privacy-team-title">Team A</div>
+        <p class="privacy-instructions">
+          Pass the phone to the <strong>Clue-Giver</strong> and one <strong>Opposing Watcher</strong>.<br><br>
+          Make sure the guessing team cannot see the screen!
+        </p>
+        <div id="privacyMiniScores" class="mini-scoreboard"></div>
+      </div>
+
+      <button class="btn btn-primary" onclick="startTurn()">
+        👁️ Reveal Card &amp; Start Timer
+      </button>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 3: ACTIVE TURN GAMEPLAY
+         ====================================================================== -->
+    <section id="activeScreen" class="screen">
+      <!-- Top HUD -->
+      <div class="active-hud">
+        <div class="hud-team">
+          <span id="activeTeamLabel" class="hud-team-name">Team A</span>
+          <span id="activeTurnScore" class="hud-turn-score">+0 pts</span>
+        </div>
+
+        <div id="activeTimerDisplay" class="hud-timer">60</div>
+
+        <button class="btn btn-sm" onclick="pauseGameTurn()">⏸ Pause</button>
+      </div>
+
+      <!-- Taboo Card -->
+      <div class="taboo-card-wrapper">
+        <div id="pauseVeil" class="pause-veil">
+          <div style="font-size: 2.5rem;">⏸️</div>
+          <div style="font-size: 1.5rem; font-weight: 900;">Turn Paused</div>
+          <p style="color: var(--text-secondary);">Card hidden while paused so nobody peeks.</p>
+          <button class="btn btn-primary" onclick="resumeGameTurn()">▶️ Resume Turn</button>
+          <button class="btn" style="width: 100%;" onclick="endTurnEarly()">End Turn Now</button>
+        </div>
+
+        <div id="tabooCard" class="taboo-card">
+          <div class="target-word-header">
+            <span class="target-eyebrow">Guess This Word</span>
+            <div id="targetWordText" class="target-word-text">LOADING</div>
+          </div>
+
+          <div id="forbiddenList" class="forbidden-list"></div>
+        </div>
+      </div>
+
+      <!-- Two Thumb-Friendly Bottom Action Buttons (NO PENALTY) -->
+      <div class="thumb-actions">
+        <button class="btn-skip" onclick="handleSkipCard()">
+          <span>✕ SKIP / TABOO</span>
+          <span class="btn-subtext">0 Points</span>
+        </button>
+
+        <button class="btn-got-it" onclick="handleGotItCard()">
+          <span>✓ GOT IT</span>
+          <span class="btn-subtext">+1 Point</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 4: END-OF-TURN SUMMARY
+         ====================================================================== -->
+    <section id="summaryScreen" class="screen">
+      <div class="top-nav">
+        <button class="btn btn-sm" onclick="finishTurnAndGoHome()">🏠 Home</button>
+        <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-secondary);">Tap status to fix disputes</span>
+      </div>
+
+      <div class="summary-header">
+        <div id="summaryTeamTitle" style="font-size: 1.1rem; font-weight: 800; color: var(--text-secondary);">Team A Scored</div>
+        <div id="summaryPointsBig" class="summary-points-big">+0</div>
+      </div>
+
+      <div id="turnLogList" class="turn-log-list"></div>
+
+      <button class="btn btn-primary" onclick="finishTurnAndNextTeam()">
+        Next Team's Turn &rarr;
+      </button>
+    </section>
+  </div>
+
+  <!-- ========================================================================
+       MODAL: RULES
+       ======================================================================== -->
+  <div id="rulesModal" class="modal-backdrop" onclick="closeModalOnBg(event, 'rulesModal')">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-size: 1.3rem; font-weight: 900;">Quick Rules</h3>
+        <button class="btn btn-sm" onclick="closeModal('rulesModal')">✕</button>
+      </div>
+      <p style="color: var(--text-secondary); line-height: 1.5; font-size: 0.96rem;">
+        <strong>1. Goal:</strong> Get your teammates to say the <strong>Target Word</strong> at the top of the card before time runs out.<br><br>
+        <strong>2. Forbidden Words:</strong> You cannot say any of the <strong>5 red words</strong> below it, nor any part or form of those words (e.g., if <em>"Swim"</em> is forbidden, you can't say <em>"Swimming"</em>).<br><br>
+        <strong>3. No Gestures or Spelling:</strong> Give verbal clues only—no acting out, pointing, rhyming clues ("sounds like..."), or saying "starts with the letter...".<br><br>
+        <strong>4. Watcher &amp; No Penalty:</strong> One player from the opposing team watches the screen beside you. If you slip up and say a forbidden word, they yell <strong>"BUZZ!"</strong>—tap <strong>Skip / Taboo</strong> to move immediately to the next random card with zero penalty.
+      </p>
+      <button class="btn btn-primary" style="min-height: 52px;" onclick="closeModal('rulesModal')">Got It</button>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL: CONFIRM RESET
+       ======================================================================== -->
+  <div id="confirmModal" class="modal-backdrop" onclick="closeModalOnBg(event, 'confirmModal')">
+    <div class="modal-card">
+      <h3 id="confirmTitle" style="font-size: 1.25rem; font-weight: 900;">Confirm Reset</h3>
+      <p id="confirmDesc" style="color: var(--text-secondary); line-height: 1.45;"></p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
+        <button class="btn" onclick="closeModal('confirmModal')">Cancel</button>
+        <button id="confirmActionBtn" class="btn btn-crimson">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       630 DISTINCT, NON-REPETITIVE TABOO CARDS
+       Each entry: [Target Word, [5 Forbidden Words]]
+       ========================================================================== */
+    const TABOO_DECK = [
+      // --- EVERYDAY OBJECTS, HOME & TECH ---
+      ["Umbrella", ["Rain", "Wet", "Open", "Weather", "Sun"]],
+      ["Microwave", ["Heat", "Food", "Kitchen", "Oven", "Popcorn"]],
+      ["Toothbrush", ["Teeth", "Paste", "Clean", "Mouth", "Bristles"]],
+      ["Passport", ["Travel", "Country", "Airport", "ID", "Stamp"]],
+      ["Escalator", ["Stairs", "Mall", "Moving", "Up", "Elevator"]],
+      ["Sunglasses", ["Eyes", "Sun", "Dark", "Wear", "Shades"]],
+      ["Pillow", ["Sleep", "Bed", "Head", "Soft", "Blanket"]],
+      ["Backpack", ["School", "Bag", "Carry", "Shoulders", "Books"]],
+      ["Blender", ["Smoothie", "Mix", "Fruit", "Kitchen", "Drink"]],
+      ["Headphones", ["Music", "Ears", "Listen", "Sound", "Wireless"]],
+      ["Vacuum", ["Clean", "Carpet", "Floor", "Dust", "Suck"]],
+      ["Candle", ["Wax", "Fire", "Birthday", "Smell", "Light"]],
+      ["Mirror", ["Reflection", "Look", "Glass", "Face", "Bathroom"]],
+      ["Wallet", ["Money", "Cards", "Pocket", "Cash", "Leather"]],
+      ["Refrigerator", ["Cold", "Food", "Kitchen", "Ice", "Milk"]],
+      ["Alarm Clock", ["Wake", "Morning", "Sleep", "Ring", "Time"]],
+      ["Treadmill", ["Run", "Gym", "Walk", "Exercise", "Machine"]],
+      ["Hammock", ["Sleep", "Trees", "Swing", "Relax", "Beach"]],
+      ["Toaster", ["Bread", "Breakfast", "Burn", "Butter", "Pop"]],
+      ["Compass", ["North", "Direction", "Lost", "Map", "Magnet"]],
+      ["Thermometer", ["Temperature", "Fever", "Sick", "Hot", "Cold"]],
+      ["Binoculars", ["See", "Far", "Eyes", "Bird", "Zoom"]],
+      ["Handcuffs", ["Police", "Arrest", "Wrists", "Jail", "Metal"]],
+      ["Fireworks", ["Sky", "Explode", "New Year", "Colorful", "Loud"]],
+      ["Chandelier", ["Ceiling", "Light", "Fancy", "Hanging", "Crystal"]],
+      ["Lawnmower", ["Grass", "Cut", "Yard", "Garden", "Green"]],
+      ["Stapler", ["Paper", "Office", "Attach", "Metal", "Clip"]],
+      ["Flashlight", ["Dark", "Battery", "Beam", "Light", "Night"]],
+      ["Hourglass", ["Sand", "Time", "Flip", "Minutes", "Glass"]],
+      ["Stethoscope", ["Doctor", "Heart", "Listen", "Chest", "Hospital"]],
+      ["Telescope", ["Stars", "Space", "Moon", "Look", "Night"]],
+      ["Suitcase", ["Luggage", "Pack", "Travel", "Clothes", "Airport"]],
+      ["Vending Machine", ["Snacks", "Coins", "Soda", "Button", "Buy"]],
+      ["Shopping Cart", ["Grocery", "Wheels", "Push", "Store", "Basket"]],
+      ["Doorbell", ["Ring", "Front", "House", "Knock", "Visitor"]],
+      ["Keychain", ["Keys", "Ring", "Pocket", "Lock", "Car"]],
+      ["Nail Clipper", ["Fingers", "Toes", "Cut", "Trim", "Manicure"]],
+      ["Extension Cord", ["Plug", "Electric", "Outlet", "Wire", "Power"]],
+      ["Bunk Bed", ["Sleep", "Top", "Bottom", "Ladder", "Kids"]],
+      ["Bean Bag", ["Chair", "Sit", "Soft", "Room", "Floor"]],
+      ["Air Fryer", ["Cook", "Crispy", "Oil", "Kitchen", "Fries"]],
+      ["Smartwatch", ["Wrist", "Apple", "Steps", "Time", "Phone"]],
+      ["Power Bank", ["Charge", "Battery", "Phone", "Cable", "Portable"]],
+      ["Ring Light", ["TikTok", "Selfie", "Video", "Circle", "Bright"]],
+      ["QR Code", ["Scan", "Camera", "Menu", "Phone", "Square"]],
+      ["Bluetooth", ["Wireless", "Connect", "Speaker", "Pair", "Phone"]],
+      ["Incognito Mode", ["Browser", "Private", "History", "Chrome", "Secret"]],
+      ["Screenshot", ["Phone", "Picture", "Save", "Screen", "Capture"]],
+      ["Wi-Fi", ["Internet", "Router", "Password", "Wireless", "Signal"]],
+      ["Hashtag", ["Twitter", "Instagram", "Symbol", "Trend", "Tag"]],
+      ["Podcast", ["Listen", "Audio", "Spotify", "Episode", "Host"]],
+      ["Emoji", ["Text", "Face", "Smiley", "Phone", "Message"]],
+      ["Autocorrect", ["Typing", "Spelling", "Phone", "Text", "Mistake"]],
+      ["Captcha", ["Robot", "Verify", "Click", "Traffic", "Human"]],
+      ["Airbnb", ["Rent", "House", "Vacation", "Hotel", "Stay"]],
+      ["Uber", ["Ride", "Car", "Driver", "App", "Taxi"]],
+      ["Amazon Prime", ["Delivery", "Package", "Bezos", "Shipping", "Shopping"]],
+      ["Costco", ["Bulk", "Membership", "Wholesale", "Hot Dog", "Store"]],
+      ["IKEA", ["Furniture", "Assemble", "Swedish", "Meatballs", "Store"]],
+      ["Dyson", ["Vacuum", "Hair", "Dryer", "Expensive", "Suction"]],
+      ["Kindle", ["Read", "Book", "Amazon", "Screen", "Digital"]],
+      ["GoPro", ["Camera", "Action", "Waterproof", "Video", "Helmet"]],
+      ["Roomba", ["Robot", "Vacuum", "Floor", "Clean", "Pet"]],
+      ["Tupperware", ["Plastic", "Leftovers", "Container", "Lid", "Food"]],
+      ["Bubble Wrap", ["Pop", "Package", "Plastic", "Shipping", "Protect"]],
+      ["Duct Tape", ["Silver", "Sticky", "Fix", "Strong", "Roll"]],
+      ["Super Glue", ["Stick", "Fingers", "Fix", "Liquid", "Bond"]],
+      ["Scissors", ["Cut", "Paper", "Sharp", "Blades", "Handles"]],
+      ["Magnifying Glass", ["Detective", "Zoom", "Big", "Look", "Lens"]],
+      ["Typewriter", ["Keys", "Paper", "Old", "Write", "Ink"]],
+      ["Vinyl Record", ["Music", "Turntable", "Play", "Album", "Retro"]],
+      ["Lava Lamp", ["Groovy", "Wax", "Light", "70s", "Float"]],
+      ["Snow Globe", ["Shake", "Winter", "Glass", "Souvenir", "Flakes"]],
+      ["Piñata", ["Hit", "Candy", "Blindfold", "Party", "Stick"]],
+      ["Confetti", ["Party", "Paper", "Throw", "Celebrate", "Colorful"]],
+      ["Disco Ball", ["Dance", "Party", "Lights", "Shiny", "Ceiling"]],
+      ["Kite", ["Wind", "Fly", "String", "Sky", "Tail"]],
+      ["Boomerang", ["Throw", "Return", "Australia", "Wood", "Catch"]],
+      ["Frisbee", ["Throw", "Dog", "Disc", "Park", "Catch"]],
+      ["Skateboard", ["Wheels", "Trick", "Ollie", "Ride", "Tony Hawk"]],
+      ["Trampoline", ["Jump", "Bounce", "Backyard", "Spring", "Flip"]],
+      ["Pogo Stick", ["Jump", "Bounce", "Spring", "Handles", "Up"]],
+      ["Rubiks Cube", ["Puzzle", "Colors", "Twist", "Solve", "Square"]],
+      ["Jigsaw Puzzle", ["Pieces", "Fit", "Picture", "Table", "Corner"]],
+      ["Monopoly", ["Board Game", "Money", "Property", "Jail", "Hotel"]],
+      ["Uno", ["Cards", "Draw Four", "Reverse", "Colors", "One"]],
+      ["Jenga", ["Blocks", "Tower", "Wood", "Fall", "Pull"]],
+      ["Chess", ["King", "Queen", "Checkmate", "Board", "Pawn"]],
+      ["Checkers", ["Board", "Red", "Black", "Jump", "King"]],
+      ["Dominoes", ["Tiles", "Dots", "Fall", "Line", "Game"]],
+      ["Poker", ["Cards", "Bluff", "Chips", "Bet", "Casino"]],
+      ["Roulette", ["Wheel", "Casino", "Red", "Black", "Spin"]],
+      ["Slot Machine", ["Casino", "Lever", "Jackpot", "Coins", "Spin"]],
+      ["Dartboard", ["Throw", "Bullseye", "Pub", "Point", "Wall"]],
+      ["Billiards", ["Pool", "Table", "Cue", "Balls", "Pocket"]],
+      ["Bowling", ["Pins", "Strike", "Alley", "Ball", "Shoes"]],
+      ["Arcade", ["Games", "Tokens", "Pac-Man", "Retro", "Joystick"]],
+      ["Mannequin", ["Store", "Clothes", "Dummy", "Display", "Plastic"]],
+      ["Scarecrow", ["Farm", "Birds", "Corn", "Straw", "Field"]],
+
+      // --- FOOD, DRINKS & CUISINE ---
+      ["Biryani", ["Rice", "Indian", "Spice", "Chicken", "Hyderabadi"]],
+      ["Avocado", ["Green", "Guacamole", "Toast", "Pit", "Fruit"]],
+      ["Sushi", ["Raw", "Fish", "Japanese", "Rice", "Roll"]],
+      ["Croissant", ["French", "Pastry", "Butter", "Breakfast", "Flaky"]],
+      ["Tiramisu", ["Italian", "Coffee", "Dessert", "Cake", "Mascarpone"]],
+      ["Poutine", ["Fries", "Gravy", "Cheese", "Canada", "Curds"]],
+      ["Samosa", ["Fried", "Potato", "Triangle", "Indian", "Chutney"]],
+      ["Butter Chicken", ["Curry", "Indian", "Naan", "Cream", "Tomato"]],
+      ["Naan", ["Bread", "Indian", "Garlic", "Tandoor", "Curry"]],
+      ["Mango Lassi", ["Yogurt", "Drink", "Indian", "Sweet", "Fruit"]],
+      ["Golgappa", ["Pani Puri", "Water", "Street Food", "Crispy", "Spicy"]],
+      ["Chai", ["Tea", "Milk", "Indian", "Masala", "Hot"]],
+      ["Jalebi", ["Sweet", "Orange", "Fried", "Sugar", "Indian"]],
+      ["Paneer", ["Cheese", "Indian", "Cottage", "Vegetarian", "Tikka"]],
+      ["Tandoori", ["Oven", "Clay", "Chicken", "Indian", "Red"]],
+      ["Dosa", ["South Indian", "Crepe", "Sambar", "Crispy", "Breakfast"]],
+      ["Gulab Jamun", ["Sweet", "Syrup", "Ball", "Dessert", "Indian"]],
+      ["Guacamole", ["Avocado", "Dip", "Chips", "Mexican", "Green"]],
+      ["Burrito", ["Wrap", "Tortilla", "Beans", "Mexican", "Chipotle"]],
+      ["Quesadilla", ["Cheese", "Tortilla", "Mexican", "Grilled", "Fold"]],
+      ["Nachos", ["Chips", "Cheese", "Jalapeño", "Salsa", "Movies"]],
+      ["Churros", ["Cinnamon", "Sugar", "Fried", "Spanish", "Stick"]],
+      ["Taco", ["Shell", "Mexican", "Tuesday", "Meat", "Salsa"]],
+      ["Ramen", ["Noodles", "Soup", "Japanese", "Broth", "Egg"]],
+      ["Dumplings", ["Steamed", "Chinese", "Dough", "Pork", "Dim Sum"]],
+      ["Pad Thai", ["Noodles", "Peanuts", "Thailand", "Shrimp", "Lime"]],
+      ["Pho", ["Vietnamese", "Soup", "Noodles", "Beef", "Broth"]],
+      ["Kimchi", ["Korean", "Cabbage", "Spicy", "Fermented", "Side"]],
+      ["Korean BBQ", ["Grill", "Meat", "Table", "Asian", "Beef"]],
+      ["Boba Tea", ["Bubble", "Tapioca", "Pearls", "Milk", "Straw"]],
+      ["Matcha", ["Green", "Tea", "Powder", "Japanese", "Latte"]],
+      ["Espresso", ["Coffee", "Shot", "Strong", "Caffeine", "Italian"]],
+      ["Cappuccino", ["Coffee", "Foam", "Milk", "Morning", "Latte"]],
+      ["Pancakes", ["Breakfast", "Syrup", "Maple", "Stack", "Butter"]],
+      ["Waffles", ["Breakfast", "Squares", "Syrup", "Iron", "Belgian"]],
+      ["Omelet", ["Eggs", "Breakfast", "Cheese", "Fold", "Pan"]],
+      ["Bacon", ["Pork", "Crispy", "Breakfast", "Eggs", "Strips"]],
+      ["Bagel", ["Cream Cheese", "Round", "Hole", "Bread", "Breakfast"]],
+      ["Donut", ["Hole", "Glazed", "Sweet", "Fried", "Sprinkles"]],
+      ["Cheesecake", ["Dessert", "Cream", "Crust", "Slice", "Sweet"]],
+      ["Brownie", ["Chocolate", "Bake", "Square", "Fudge", "Dessert"]],
+      ["Macaron", ["French", "Cookie", "Colorful", "Almond", "Sweet"]],
+      ["Gelato", ["Italian", "Ice Cream", "Scoop", "Cold", "Dessert"]],
+      ["Milkshake", ["Ice Cream", "Straw", "Thick", "Chocolate", "Drink"]],
+      ["Root Beer Float", ["Ice Cream", "Soda", "Vanilla", "Scoop", "Mug"]],
+      ["Popcorn", ["Movie", "Butter", "Corn", "Salt", "Bucket"]],
+      ["Cotton Candy", ["Carnival", "Sugar", "Pink", "Fluffy", "Stick"]],
+      ["Pretzel", ["Twist", "Salt", "Mustard", "Dough", "Snack"]],
+      ["Hot Dog", ["Sausage", "Bun", "Mustard", "Ketchup", "Baseball"]],
+      ["Hamburger", ["Beef", "Bun", "Patty", "Cheese", "McDonald's"]],
+      ["French Fries", ["Potato", "Ketchup", "McDonald's", "Fried", "Salt"]],
+      ["Onion Rings", ["Fried", "Round", "Batter", "Burger", "Side"]],
+      ["Mozzarella Sticks", ["Cheese", "Fried", "Marinara", "Pull", "Appetizer"]],
+      ["Chicken Wings", ["Buffalo", "Sauce", "Ranch", "Spicy", "Bones"]],
+      ["Caesar Salad", ["Lettuce", "Croutons", "Dressing", "Parmesan", "Romaine"]],
+      ["Lasagna", ["Pasta", "Layers", "Italian", "Cheese", "Garfield"]],
+      ["Spaghetti", ["Noodles", "Meatballs", "Italian", "Sauce", "Fork"]],
+      ["Ravioli", ["Pasta", "Stuffed", "Italian", "Square", "Cheese"]],
+      ["Garlic Bread", ["Butter", "Italian", "Toast", "Pasta", "Bake"]],
+      ["Hummus", ["Chickpeas", "Dip", "Pita", "Middle Eastern", "Tahini"]],
+      ["Falafel", ["Chickpeas", "Fried", "Pita", "Middle Eastern", "Ball"]],
+      ["Shawarma", ["Wrap", "Meat", "Garlic", "Middle Eastern", "Spit"]],
+      ["Baklava", ["Pastry", "Honey", "Nuts", "Sweet", "Phyllo"]],
+      ["Pineapple", ["Fruit", "Yellow", "Tropical", "Pizza", "Spiky"]],
+      ["Watermelon", ["Summer", "Seeds", "Red", "Green", "Fruit"]],
+      ["Pomegranate", ["Seeds", "Red", "Fruit", "Juice", "Ruby"]],
+      ["Coconut", ["Palm", "Tree", "Milk", "Tropical", "Shell"]],
+      ["Dragon Fruit", ["Pink", "Seeds", "Tropical", "Exotic", "White"]],
+      ["Broccoli", ["Green", "Vegetable", "Tree", "Healthy", "Steamed"]],
+      ["Asparagus", ["Green", "Vegetable", "Spears", "Smell", "Grill"]],
+      ["Jalapeño", ["Spicy", "Pepper", "Green", "Mexican", "Hot"]],
+      ["Wasabi", ["Green", "Spicy", "Sushi", "Japanese", "Nose"]],
+      ["Soy Sauce", ["Salty", "Sushi", "Chinese", "Brown", "Bottle"]],
+      ["Maple Syrup", ["Canada", "Pancakes", "Tree", "Sweet", "Pour"]],
+      ["Peanut Butter", ["Jelly", "Sandwich", "Nuts", "Smooth", "Crunchy"]],
+      ["Nutella", ["Chocolate", "Hazelnut", "Spread", "Jar", "Toast"]],
+      ["Ketchup", ["Tomato", "Fries", "Red", "Heinz", "Condiment"]],
+      ["Mayonnaise", ["White", "Sandwich", "Eggs", "Condiment", "Salad"]],
+      ["Sriracha", ["Hot Sauce", "Spicy", "Rooster", "Red", "Bottle"]],
+      ["Champagne", ["Bubbles", "Celebrate", "New Year", "Wine", "Toast"]],
+      ["Tequila", ["Shots", "Lime", "Salt", "Mexico", "Margarita"]],
+      ["Mojito", ["Mint", "Rum", "Lime", "Cocktail", "Drink"]],
+      ["Margarita", ["Tequila", "Salt", "Rim", "Lime", "Cocktail"]],
+      ["Red Bull", ["Energy", "Drink", "Wings", "Caffeine", "Can"]],
+      ["Gatorade", ["Sports", "Drink", "Electrolytes", "Sweat", "Bottle"]],
+
+      // --- ACTIONS, SITUATIONS & CONCEPTS ---
+      ["Procrastinate", ["Delay", "Later", "Lazy", "Work", "Put Off"]],
+      ["Ghosting", ["Disappear", "Text", "Ignore", "Dating", "Reply"]],
+      ["Parallel Parking", ["Car", "Curb", "Between", "Driving", "Test"]],
+      ["Déjà Vu", ["Before", "Happened", "Feeling", "Memory", "Again"]],
+      ["Hangover", ["Alcohol", "Drink", "Headache", "Morning", "Sick"]],
+      ["Jet Lag", ["Flight", "Time Zone", "Tired", "Sleep", "Travel"]],
+      ["Brain Freeze", ["Ice Cream", "Cold", "Headache", "Fast", "Drink"]],
+      ["Photobomb", ["Picture", "Camera", "Ruin", "Background", "Jump"]],
+      ["Binge-Watch", ["Netflix", "Episodes", "TV", "Series", "Marathon"]],
+      ["Daydream", ["Think", "Distracted", "Stare", "Awake", "Imagine"]],
+      ["Sleepwalking", ["Night", "Bed", "Move", "Eyes", "Asleep"]],
+      ["Snoring", ["Sleep", "Loud", "Nose", "Night", "Sound"]],
+      ["Hiccups", ["Water", "Scare", "Sound", "Diaphragm", "Stop"]],
+      ["Yawning", ["Tired", "Mouth", "Sleepy", "Contagious", "Open"]],
+      ["Sneeze", ["Bless You", "Nose", "Allergy", "Tissue", "Pepper"]],
+      ["Goosebumps", ["Cold", "Scared", "Skin", "Hair", "Chills"]],
+      ["Blushing", ["Red", "Face", "Embarrassed", "Shy", "Cheeks"]],
+      ["Whistling", ["Lips", "Tune", "Blow", "Sound", "Music"]],
+      ["Juggling", ["Balls", "Throw", "Catch", "Circus", "Air"]],
+      ["Origami", ["Paper", "Fold", "Japanese", "Crane", "Art"]],
+      ["Karaoke", ["Sing", "Microphone", "Lyrics", "Bar", "Music"]],
+      ["Charades", ["Act", "Silent", "Guess", "Game", "Words"]],
+      ["Hide and Seek", ["Count", "Find", "Game", "Kids", "Behind"]],
+      ["Thumb War", ["Fingers", "Pin", "One Two Three Four", "Hand", "Game"]],
+      ["Rock Paper Scissors", ["Shoot", "Hand", "Game", "Tie", "Decide"]],
+      ["Arm Wrestling", ["Strong", "Elbow", "Table", "Push", "Hand"]],
+      ["Tug of War", ["Rope", "Pull", "Teams", "Strength", "Line"]],
+      ["Limbo", ["Under", "Stick", "Bend", "Low", "Dance"]],
+      ["Moonwalk", ["Michael Jackson", "Dance", "Backwards", "Slide", "Feet"]],
+      ["Breakdance", ["Spin", "Floor", "Hip Hop", "Dance", "Head"]],
+      ["Crowd Surfing", ["Concert", "Hands", "Stage", "Audience", "Lift"]],
+      ["Stage Fright", ["Nervous", "Perform", "Audience", "Scared", "Public"]],
+      ["First Date", ["Dinner", "Nervous", "Meet", "Romantic", "Couple"]],
+      ["Blind Date", ["Meet", "Never", "Stranger", "Set Up", "Couple"]],
+      ["Proposal", ["Ring", "Marry", "Knee", "Engage", "Question"]],
+      ["Honeymoon", ["Wedding", "Vacation", "Newlyweds", "Trip", "After"]],
+      ["Baby Shower", ["Pregnant", "Gifts", "Party", "Mom", "Diapers"]],
+      ["Bachelor Party", ["Groom", "Wedding", "Vegas", "Guys", "Before"]],
+      ["Graduation", ["Cap", "Gown", "Diploma", "School", "College"]],
+      ["Retirement", ["Old", "Stop", "Work", "Job", "Pension"]],
+      ["Promotion", ["Job", "Raise", "Boss", "Higher", "Work"]],
+      ["Interview", ["Job", "Resume", "Questions", "Hire", "Suit"]],
+      ["Strike", ["Workers", "Protest", "Job", "Union", "Bowling"]],
+      ["Black Friday", ["Shopping", "Sale", "Thanksgiving", "Deals", "Store"]],
+      ["Cyber Monday", ["Online", "Shopping", "Deals", "Sale", "Internet"]],
+      ["Spring Cleaning", ["House", "Tidy", "Season", "Trash", "Organize"]],
+      ["Garage Sale", ["Sell", "Used", "Yard", "Old", "Driveway"]],
+      ["Road Trip", ["Car", "Drive", "Highway", "Vacation", "Snacks"]],
+      ["Camping", ["Tent", "Forest", "Fire", "Outdoors", "Sleeping Bag"]],
+      ["Stargazing", ["Night", "Sky", "Constellations", "Look", "Dark"]],
+      ["Sunburn", ["Beach", "Red", "Skin", "Sunscreen", "Peel"]],
+      ["Quicksand", ["Sink", "Trap", "Jungle", "Sand", "Stuck"]],
+      ["Avalanche", ["Snow", "Mountain", "Fall", "Slide", "Ski"]],
+      ["Earthquake", ["Shake", "Ground", "Richter", "Disaster", "Plates"]],
+      ["Tornado", ["Twister", "Wind", "Storm", "Spin", "Funnel"]],
+      ["Tsunami", ["Wave", "Ocean", "Earthquake", "Flood", "Water"]],
+      ["Eclipse", ["Moon", "Sun", "Shadow", "Block", "Sky"]],
+      ["Gravity", ["Fall", "Newton", "Earth", "Space", "Pull"]],
+      ["Photosynthesis", ["Plants", "Sun", "Light", "Green", "Leaves"]],
+      ["Hibernation", ["Bear", "Winter", "Sleep", "Cold", "Animals"]],
+      ["Camouflage", ["Hide", "Blend", "Army", "Chameleon", "Green"]],
+      ["Nostalgia", ["Past", "Memories", "Childhood", "Miss", "Old"]],
+      ["Sarcasm", ["Tone", "Joke", "Opposite", "Mean", "Irony"]],
+      ["Claustrophobia", ["Small", "Spaces", "Fear", "Elevator", "Tight"]],
+      ["Insomnia", ["Sleep", "Awake", "Night", "Cant", "Tired"]],
+      ["Amnesia", ["Memory", "Forget", "Who", "Lost", "Head"]],
+      ["Placebo", ["Sugar", "Pill", "Fake", "Medicine", "Effect"]],
+      ["Karma", ["What Goes Around", "Luck", "Good", "Bad", "Fate"]],
+      ["Superstition", ["Luck", "Black Cat", "Mirror", "13", "Ladder"]],
+      ["Poker Face", ["Bluff", "Emotion", "Lady Gaga", "Hide", "Cards"]],
+      ["White Lie", ["Small", "Truth", "Harmless", "Fib", "Tell"]],
+      ["Alibi", ["Crime", "Excuse", "Where", "Prove", "Innocent"]],
+      ["Witness", ["See", "Court", "Crime", "Testify", "Judge"]],
+      ["Verdict", ["Guilty", "Jury", "Judge", "Court", "Decision"]],
+      ["Bribe", ["Money", "Illegal", "Pay", "Corrupt", "Secret"]],
+      ["Pickpocket", ["Steal", "Wallet", "Crowd", "Thief", "Hand"]],
+      ["Hacking", ["Computer", "Password", "Code", "Steal", "Security"]],
+      ["Spam", ["Email", "Junk", "Fake", "Inbox", "Scam"]],
+      ["Clickbait", ["Headline", "YouTube", "Fake", "Thumbnail", "Views"]],
+      ["Spoiler", ["Ending", "Movie", "Ruin", "Tell", "Plot"]],
+      ["Cliffhanger", ["Ending", "Suspense", "Episode", "Next", "Wait"]],
+      ["Plot Twist", ["Surprise", "Movie", "Ending", "Unexpected", "Story"]],
+      ["Cameo", ["Short", "Appearance", "Celebrity", "Movie", "Stan Lee"]],
+      ["Sequel", ["Part Two", "Movie", "Follow", "Next", "Original"]],
+      ["Prequel", ["Before", "Movie", "Origin", "Story", "First"]],
+      ["Remake", ["Again", "New", "Old", "Movie", "Version"]],
+      ["Soundtrack", ["Music", "Movie", "Songs", "Score", "Album"]],
+      ["Autograph", ["Sign", "Celebrity", "Pen", "Name", "Fan"]],
+      ["Paparazzi", ["Photos", "Celebrities", "Camera", "Follow", "Tabloid"]],
+      ["Red Carpet", ["Oscars", "Celebrities", "Walk", "Dress", "Premiere"]],
+      ["Encore", ["Concert", "More", "Clap", "Stage", "Song"]],
+      ["Lip Sync", ["Mouth", "Sing", "Fake", "Words", "Song"]],
+      ["Standing Ovation", ["Clap", "Applause", "Crowd", "Up", "Performance"]],
+
+      // --- MOVIES, TV & ENTERTAINMENT ---
+      ["Inception", ["Dream", "Leonardo DiCaprio", "Sleep", "Spin", "Nolan"]],
+      ["Hogwarts", ["Harry Potter", "School", "Wizard", "Magic", "Castle"]],
+      ["Titanic", ["Ship", "Iceberg", "Jack", "Rose", "Sink"]],
+      ["The Matrix", ["Neo", "Red Pill", "Simulation", "Keanu Reeves", "Code"]],
+      ["Star Wars", ["Jedi", "Lightsaber", "Darth Vader", "Space", "Force"]],
+      ["Jurassic Park", ["Dinosaurs", "Island", "T-Rex", "Spielberg", "Clones"]],
+      ["The Godfather", ["Mafia", "Offer", "Marlon Brando", "Corleone", "Mob"]],
+      ["Forrest Gump", ["Run", "Chocolates", "Tom Hanks", "Bench", "Box"]],
+      ["Avatar", ["Blue", "Pandora", "James Cameron", "Aliens", "3D"]],
+      ["The Lion King", ["Simba", "Disney", "Mufasa", "Africa", "Hakuna Matata"]],
+      ["Frozen", ["Elsa", "Let It Go", "Snow", "Disney", "Olaf"]],
+      ["Toy Story", ["Woody", "Buzz", "Pixar", "Andy", "Play"]],
+      ["Finding Nemo", ["Fish", "Clownfish", "Ocean", "Dory", "Lost"]],
+      ["Shrek", ["Ogre", "Green", "Donkey", "Swamp", "Princess"]],
+      ["Spider-Man", ["Web", "Peter Parker", "Marvel", "Bite", "New York"]],
+      ["Batman", ["Gotham", "Bruce Wayne", "Joker", "Dark Knight", "Robin"]],
+      ["Iron Man", ["Tony Stark", "Suit", "Marvel", "Robert Downey Jr", "Avengers"]],
+      ["Thanos", ["Snap", "Infinity", "Purple", "Avengers", "Gauntlet"]],
+      ["Joker", ["Batman", "Clown", "Gotham", "Laugh", "Villain"]],
+      ["Harry Potter", ["Wizard", "Scar", "Voldemort", "Magic", "Glasses"]],
+      ["Voldemort", ["He Who Must Not Be Named", "Harry Potter", "Nose", "Evil", "Wizard"]],
+      ["Dumbledore", ["Headmaster", "Hogwarts", "Beard", "Wizard", "Harry Potter"]],
+      ["Quidditch", ["Broomstick", "Harry Potter", "Snitch", "Sport", "Fly"]],
+      ["Lightsaber", ["Star Wars", "Jedi", "Sword", "Laser", "Vader"]],
+      ["Darth Vader", ["Father", "Luke", "Black", "Mask", "Star Wars"]],
+      ["Baby Yoda", ["Grogu", "Mandalorian", "Green", "Small", "Star Wars"]],
+      ["Gollum", ["Precious", "Ring", "Lord of the Rings", "Hobbit", "Smeagol"]],
+      ["Gandalf", ["Wizard", "Shall Not Pass", "Lord of the Rings", "Grey", "Staff"]],
+      ["Stranger Things", ["Eleven", "Upside Down", "Netflix", "80s", "Demogorgon"]],
+      ["Breaking Bad", ["Walter White", "Meth", "Chemistry", "Heisenberg", "Jesse"]],
+      ["Game of Thrones", ["Dragons", "Winter", "Iron Throne", "Stark", "HBO"]],
+      ["The Office", ["Michael Scott", "Dunder Mifflin", "Paper", "Jim", "Dwight"]],
+      ["Friends", ["Central Perk", "Ross", "Rachel", "Six", "Sitcom"]],
+      ["Squid Game", ["Korean", "Netflix", "Red Light", "Money", "Deadly"]],
+      ["Money Heist", ["Professor", "Red", "Mask", "Spain", "Bank"]],
+      ["The Simpsons", ["Yellow", "Homer", "Bart", "Springfield", "Cartoon"]],
+      ["SpongeBob", ["Pineapple", "SquarePants", "Sea", "Patrick", "Yellow"]],
+      ["Pokemon", ["Pikachu", "Catch", "Ash", "Ball", "Anime"]],
+      ["Pikachu", ["Yellow", "Electric", "Pokemon", "Mouse", "Thunderbolt"]],
+      ["Naruto", ["Ninja", "Anime", "Hokage", "Orange", "Fox"]],
+      ["Goku", ["Dragon Ball", "Saiyan", "Anime", "Hair", "Kamehameha"]],
+      ["Wednesday Addams", ["Goth", "Dance", "Netflix", "Black", "Family"]],
+      ["Barbie", ["Doll", "Pink", "Ken", "Margot Robbie", "Toy"]],
+      ["Oppenheimer", ["Bomb", "Atomic", "Nolan", "Nuclear", "Physicist"]],
+      ["Interstellar", ["Space", "Black Hole", "Time", "Nolan", "McConaughey"]],
+      ["Pulp Fiction", ["Tarantino", "Samuel L Jackson", "Briefcase", "Dance", "90s"]],
+      ["Fight Club", ["First Rule", "Brad Pitt", "Soap", "Edward Norton", "Punch"]],
+      ["The Hunger Games", ["Katniss", "Arrow", "District", "Tribute", "Arena"]],
+      ["Twilight", ["Vampire", "Werewolf", "Bella", "Edward", "Sparkle"]],
+      ["James Bond", ["007", "Spy", "Martini", "British", "Secret Agent"]],
+      ["Sherlock Holmes", ["Detective", "Watson", "London", "Elementary", "Pipe"]],
+      ["Dracula", ["Vampire", "Blood", "Transylvania", "Bite", "Garlic"]],
+      ["Frankenstein", ["Monster", "Doctor", "Green", "Bolts", "Alive"]],
+      ["Godzilla", ["Monster", "Japan", "Giant", "Lizard", "City"]],
+      ["King Kong", ["Gorilla", "Giant", "Empire State", "Ape", "Skull Island"]],
+      ["Indiana Jones", ["Whip", "Hat", "Treasure", "Harrison Ford", "Archaeologist"]],
+      ["Rocky", ["Boxer", "Stairs", "Philadelphia", "Stallone", "Adrian"]],
+      ["John Wick", ["Dog", "Keanu Reeves", "Assassin", "Suit", "Revenge"]],
+      ["Fast and Furious", ["Cars", "Vin Diesel", "Family", "Race", "Street"]],
+      ["Home Alone", ["Kevin", "Christmas", "Burglars", "Forgot", "Kid"]],
+      ["The Grinch", ["Green", "Christmas", "Steal", "Whoville", "Heart"]],
+      ["Oscars", ["Academy Awards", "Movie", "Gold", "Statue", "Hollywood"]],
+      ["Grammys", ["Music", "Award", "Album", "Song", "Trophy"]],
+      ["Coachella", ["Festival", "Music", "Desert", "California", "Outfits"]],
+      ["Super Bowl", ["Football", "Halftime", "Commercials", "Championship", "NFL"]],
+      ["Olympics", ["Medals", "Gold", "Four Years", "Sports", "Rings"]],
+      ["World Cup", ["Soccer", "FIFA", "Football", "Trophy", "Countries"]],
+
+      // --- GAMING & INTERNET CULTURE ---
+      ["Grand Theft Auto", ["GTA", "Cars", "Steal", "Rockstar", "Vice City"]],
+      ["Minecraft", ["Blocks", "Creeper", "Build", "Mine", "Diamond"]],
+      ["Fortnite", ["Battle Royale", "Build", "Dance", "Bus", "Epic"]],
+      ["Call of Duty", ["Shooter", "War", "Gun", "Warzone", "Multiplayer"]],
+      ["Mario", ["Nintendo", "Plumber", "Luigi", "Mushroom", "Princess"]],
+      ["Luigi", ["Mario", "Green", "Brother", "Nintendo", "Mansion"]],
+      ["Zelda", ["Link", "Nintendo", "Princess", "Hyrule", "Sword"]],
+      ["Sonic", ["Hedgehog", "Blue", "Fast", "Rings", "Sega"]],
+      ["Pac-Man", ["Yellow", "Ghosts", "Dots", "Arcade", "Eat"]],
+      ["Tetris", ["Blocks", "Fall", "Lines", "Fit", "Puzzle"]],
+      ["Among Us", ["Impostor", "Sus", "Space", "Vote", "Crewmate"]],
+      ["Roblox", ["Game", "Kids", "Build", "Avatars", "Robux"]],
+      ["FIFA", ["Soccer", "EA Sports", "Video Game", "Football", "Ultimate Team"]],
+      ["The Sims", ["Life", "House", "Build", "Control", "Character"]],
+      ["PlayStation", ["Sony", "Console", "Controller", "PS5", "Xbox"]],
+      ["Nintendo Switch", ["Console", "Joy-Con", "Portable", "Mario", "Handheld"]],
+      ["Twitch", ["Stream", "Live", "Gamers", "Chat", "Purple"]],
+      ["YouTube", ["Videos", "Subscribe", "Channel", "Google", "Watch"]],
+      ["TikTok", ["Short", "Videos", "Dance", "Scroll", "Viral"]],
+      ["Instagram", ["Photos", "Reels", "Stories", "Follow", "Meta"]],
+      ["Reddit", ["Subreddit", "Upvote", "Forum", "Karma", "Thread"]],
+      ["Discord", ["Chat", "Voice", "Server", "Gamers", "Call"]],
+      ["Spotify", ["Music", "Playlist", "Stream", "Wrapped", "Green"]],
+      ["Netflix", ["Stream", "Movies", "Shows", "Chill", "Red"]],
+      ["Wikipedia", ["Encyclopedia", "Search", "Free", "Edit", "Article"]],
+      ["Google Maps", ["Directions", "GPS", "Navigate", "Drive", "Location"]],
+      ["ChatGPT", ["AI", "OpenAI", "Bot", "Write", "Prompt"]],
+      ["Bitcoin", ["Crypto", "Digital", "Currency", "Blockchain", "Coin"]],
+      ["Meme", ["Funny", "Internet", "Viral", "Picture", "Joke"]],
+      ["Influencer", ["Social Media", "Followers", "Sponsor", "Content", "Brand"]],
+      ["Algorithm", ["Feed", "Recommend", "Social Media", "Code", "For You"]],
+      ["Rickroll", ["Never Gonna Give You Up", "Prank", "Link", "Song", "80s"]],
+
+      // --- BOLLYWOOD, PUNJABI & DESI POP CULTURE ---
+      ["Shah Rukh Khan", ["SRK", "King", "Bollywood", "Actor", "DDLJ"]],
+      ["Salman Khan", ["Bhai", "Bollywood", "Actor", "Tiger", "Shirtless"]],
+      ["Aamir Khan", ["Perfectionist", "3 Idiots", "Dangal", "Bollywood", "Actor"]],
+      ["Amitabh Bachchan", ["Big B", "KBC", "Bollywood", "Actor", "Tall"]],
+      ["Priyanka Chopra", ["Nick Jonas", "Bollywood", "Quantico", "Actress", "Miss World"]],
+      ["Deepika Padukone", ["Ranveer Singh", "Bollywood", "Actress", "Pathaan", "Dimples"]],
+      ["Ranbir Kapoor", ["Alia Bhatt", "Bollywood", "Animal", "Actor", "Rockstar"]],
+      ["Alia Bhatt", ["Ranbir Kapoor", "Bollywood", "Actress", "Gangubai", "Student"]],
+      ["Hrithik Roshan", ["Dance", "Greek God", "Krrish", "Bollywood", "Six Fingers"]],
+      ["Akshay Kumar", ["Khiladi", "Bollywood", "Action", "Canada", "Hera Pheri"]],
+      ["Diljit Dosanjh", ["Punjabi", "Singer", "Turban", "Coachella", "G.O.A.T."]],
+      ["Karan Aujla", ["Punjabi", "Singer", "Tauba Tauba", "Geetan Di Machine", "Lyrics"]],
+      ["Sidhu Moose Wala", ["Punjabi", "Singer", "295", "Legend", "Rapper"]],
+      ["AP Dhillon", ["Brown Munde", "Punjabi", "Singer", "Excuses", "Canada"]],
+      ["Arijit Singh", ["Singer", "Bollywood", "Romantic", "Voice", "Tum Hi Ho"]],
+      ["Shreya Ghoshal", ["Singer", "Female", "Bollywood", "Voice", "Melodious"]],
+      ["Yo Yo Honey Singh", ["Rapper", "Brown Rang", "Punjabi", "Blue Eyes", "Party"]],
+      ["Badshah", ["Rapper", "DJ Waley Babu", "Glasses", "Bollywood", "Singer"]],
+      ["3 Idiots", ["Aamir Khan", "Engineering", "Rancho", "All Is Well", "College"]],
+      ["DDLJ", ["Shah Rukh Khan", "Kajol", "Train", "Simran", "Raj"]],
+      ["Sholay", ["Gabbar", "Jai", "Veeru", "Kitne Aadmi The", "Classic"]],
+      ["Kabhi Khushi Kabhie Gham", ["K3G", "Karan Johar", "Family", "Shah Rukh", "Poo"]],
+      ["Zindagi Na Milegi Dobara", ["Spain", "Road Trip", "Hrithik", "Tomatina", "Friends"]],
+      ["Yeh Jawaani Hai Deewani", ["Ranbir", "Deepika", "Manali", "Bunny", "Naina"]],
+      ["Hera Pheri", ["Babu Bhaiya", "Raju", "Shyam", "Comedy", "Akshay"]],
+      ["Bahubali", ["Katappa", "Prabhas", "Waterfall", "Why", "Movie"]],
+      ["RRR", ["Naatu Naatu", "Oscar", "Ram Charan", "NTR", "Dance"]],
+      ["Dangal", ["Wrestling", "Aamir Khan", "Daughters", "Gold", "Medal"]],
+      ["Lagaan", ["Cricket", "British", "Tax", "Aamir Khan", "Match"]],
+      ["Bhangra", ["Punjabi", "Dance", "Dhol", "Shoulders", "Wedding"]],
+      ["Garba", ["Navratri", "Gujarati", "Dance", "Sticks", "Circle"]],
+      ["Diwali", ["Lights", "Festival", "Fireworks", "Candles", "Indian"]],
+      ["Holi", ["Colors", "Festival", "Water", "Throw", "Spring"]],
+      ["Cricket", ["Bat", "Ball", "Wicket", "India", "IPL"]],
+      ["Virat Kohli", ["Cricket", "Anushka", "Captain", "Bat", "King"]],
+      ["MS Dhoni", ["Captain Cool", "Cricket", "Helicopter", "CSK", "Wicketkeeper"]],
+      ["Sachin Tendulkar", ["God of Cricket", "100", "Bat", "India", "Master"]],
+      ["Taj Mahal", ["Agra", "White", "Marble", "Love", "Wonder"]],
+      ["Rickshaw", ["Auto", "Three Wheels", "India", "Ride", "Meter"]],
+      ["Mehendi", ["Henna", "Hands", "Wedding", "Bride", "Brown"]],
+      ["Saree", ["Drape", "Indian", "Wear", "Blouse", "Woman"]],
+      ["Turban", ["Pagri", "Head", "Sikh", "Tie", "Cloth"]],
+
+      // --- FAMOUS PEOPLE, HISTORY & CHARACTERS ---
+      ["Albert Einstein", ["Relativity", "Genius", "Hair", "Physics", "E=mc2"]],
+      ["Elon Musk", ["Tesla", "SpaceX", "Twitter", "X", "Billionaire"]],
+      ["Taylor Swift", ["Singer", "Eras Tour", "Shake It Off", "Fans", "Swifties"]],
+      ["Beyoncé", ["Queen Bey", "Single Ladies", "Jay-Z", "Singer", "Halo"]],
+      ["Michael Jackson", ["King of Pop", "Moonwalk", "Thriller", "Glove", "Singer"]],
+      ["Drake", ["Toronto", "Rapper", "God's Plan", "OVO", "Hotline Bling"]],
+      ["Eminem", ["Rapper", "Slim Shady", "Detroit", "Lose Yourself", "Fast"]],
+      ["Rihanna", ["Umbrella", "Fenty", "Singer", "Barbados", "Diamonds"]],
+      ["Cristiano Ronaldo", ["Soccer", "Portugal", "SIUUU", "Messi", "Football"]],
+      ["Lionel Messi", ["Argentina", "Soccer", "World Cup", "Inter Miami", "GOAT"]],
+      ["LeBron James", ["Basketball", "NBA", "Lakers", "King", "Dunk"]],
+      ["Michael Jordan", ["Bulls", "Basketball", "Shoes", "23", "NBA"]],
+      ["Serena Williams", ["Tennis", "Grand Slam", "Venus", "Racket", "Champion"]],
+      ["Muhammad Ali", ["Boxer", "Butterfly", "Bee", "Heavyweight", "Greatest"]],
+      ["Usain Bolt", ["Fast", "Run", "Jamaica", "Olympics", "Sprint"]],
+      ["Cleopatra", ["Egypt", "Queen", "Nile", "Pharaoh", "Caesar"]],
+      ["Julius Caesar", ["Rome", "Emperor", "Salad", "Brutus", "Stabbed"]],
+      ["Napoleon", ["French", "Short", "Emperor", "Waterloo", "General"]],
+      ["Abraham Lincoln", ["President", "Hat", "Beard", "Civil War", "Penny"]],
+      ["Martin Luther King Jr", ["Dream", "Speech", "Civil Rights", "March", "Equality"]],
+      ["Mahatma Gandhi", ["India", "Peace", "Non-Violence", "Salt", "Glasses"]],
+      ["Nelson Mandela", ["South Africa", "Prison", "President", "Apartheid", "Freedom"]],
+      ["Queen Elizabeth", ["England", "Monarch", "Crown", "Royal", "London"]],
+      ["William Shakespeare", ["Romeo", "Juliet", "Playwright", "Hamlet", "Poet"]],
+      ["Leonardo da Vinci", ["Mona Lisa", "Painter", "Italian", "Last Supper", "Inventor"]],
+      ["Pablo Picasso", ["Painter", "Cubism", "Spanish", "Art", "Abstract"]],
+      ["Vincent van Gogh", ["Starry Night", "Ear", "Painter", "Dutch", "Sunflowers"]],
+      ["Beethoven", ["Deaf", "Composer", "Symphony", "Piano", "Music"]],
+      ["Mozart", ["Composer", "Classical", "Austria", "Prodigy", "Symphony"]],
+      ["Steve Jobs", ["Apple", "iPhone", "Turtleneck", "Founder", "Mac"]],
+      ["Bill Gates", ["Microsoft", "Windows", "Rich", "Computer", "Founder"]],
+      ["Mark Zuckerberg", ["Facebook", "Meta", "Instagram", "CEO", "Social Media"]],
+      ["Gordon Ramsay", ["Chef", "Yell", "Hell's Kitchen", "Cooking", "Raw"]],
+      ["Oprah Winfrey", ["Talk Show", "Car", "Host", "Billionaire", "Book Club"]],
+      ["Santa Claus", ["Christmas", "North Pole", "Reindeer", "Chimney", "Presents"]],
+      ["Tooth Fairy", ["Pillow", "Money", "Kids", "Fall Out", "Mouth"]],
+      ["Easter Bunny", ["Eggs", "Chocolate", "Basket", "Rabbit", "Spring"]],
+      ["Cupid", ["Valentine", "Arrow", "Love", "Bow", "Heart"]],
+      ["Bigfoot", ["Sasquatch", "Forest", "Monster", "Hairy", "Footprint"]],
+      ["Loch Ness Monster", ["Scotland", "Lake", "Nessie", "Creature", "Water"]],
+      ["Mermaid", ["Fish", "Tail", "Ariel", "Ocean", "Half"]],
+      ["Unicorn", ["Horn", "Horse", "Mythical", "Rainbow", "Magic"]],
+      ["Werewolf", ["Full Moon", "Howl", "Wolf", "Transform", "Silver"]],
+      ["Zombie", ["Brains", "Undead", "Apocalypse", "Walking Dead", "Bite"]],
+      ["Vampire", ["Blood", "Garlic", "Bite", "Fangs", "Night"]],
+      ["Genie", ["Lamp", "Three Wishes", "Rub", "Aladdin", "Magic"]],
+      ["Pirate", ["Ship", "Treasure", "Eye Patch", "Parrot", "Arrr"]],
+      ["Ninja", ["Stealth", "Japan", "Black", "Sword", "Silent"]],
+      ["Samurai", ["Japan", "Sword", "Warrior", "Honor", "Katana"]],
+      ["Astronaut", ["Space", "Moon", "NASA", "Rocket", "Suit"]],
+
+      // --- PLACES, GEOGRAPHY & LANDMARKS ---
+      ["Eiffel Tower", ["Paris", "France", "Iron", "Tall", "Landmark"]],
+      ["Statue of Liberty", ["New York", "Torch", "Green", "France", "Harbor"]],
+      ["Great Wall of China", ["Long", "Stone", "Space", "Ancient", "Border"]],
+      ["Pyramids", ["Egypt", "Tombs", "Triangle", "Pharaoh", "Desert"]],
+      ["Colosseum", ["Rome", "Gladiator", "Italy", "Arena", "Ancient"]],
+      ["Mount Everest", ["Highest", "Mountain", "Nepal", "Climb", "Himalayas"]],
+      ["Niagara Falls", ["Waterfall", "Canada", "New York", "Maid of the Mist", "Water"]],
+      ["Grand Canyon", ["Arizona", "Deep", "Rocks", "Colorado River", "Gorge"]],
+      ["Las Vegas", ["Casino", "Gambling", "Nevada", "Sin City", "Strip"]],
+      ["Hollywood", ["Movies", "Sign", "Los Angeles", "Celebrities", "California"]],
+      ["Times Square", ["New York", "Billboards", "New Year", "Ball Drop", "Bright"]],
+      ["Central Park", ["New York", "Green", "Trees", "Manhattan", "Walk"]],
+      ["Disneyland", ["Mickey Mouse", "Theme Park", "Rides", "California", "Castle"]],
+      ["Area 51", ["Aliens", "Secret", "Nevada", "UFO", "Military"]],
+      ["Bermuda Triangle", ["Disappear", "Ships", "Planes", "Ocean", "Mystery"]],
+      ["Antarctica", ["Cold", "Ice", "Penguins", "South Pole", "Continent"]],
+      ["Sahara Desert", ["Sand", "Hot", "Africa", "Dry", "Camels"]],
+      ["Amazon Rainforest", ["Jungle", "Trees", "Brazil", "River", "South America"]],
+      ["Mount Fuji", ["Japan", "Volcano", "Snow", "Mountain", "Tokyo"]],
+      ["Stonehenge", ["Rocks", "England", "Circle", "Ancient", "Mystery"]],
+      ["Big Ben", ["Clock", "London", "Tower", "England", "Bell"]],
+      ["Sydney Opera House", ["Australia", "Sails", "Harbor", "Music", "Building"]],
+      ["Burj Khalifa", ["Dubai", "Tallest", "Skyscraper", "Building", "Tower"]],
+      ["CN Tower", ["Toronto", "Canada", "Tall", "EdgeWalk", "Skyline"]],
+      ["Golden Gate Bridge", ["San Francisco", "Red", "Orange", "Bay", "Fog"]],
+      ["Mount Rushmore", ["Presidents", "Carved", "Faces", "Mountain", "South Dakota"]],
+      ["Vatican City", ["Pope", "Smallest", "Rome", "Catholic", "Country"]],
+      ["Hawaii", ["Islands", "Aloha", "Volcano", "Beach", "Surf"]],
+      ["Venice", ["Canals", "Gondola", "Italy", "Water", "Boats"]],
+      ["Tokyo", ["Japan", "Capital", "City", "Sushi", "Anime"]],
+      ["London", ["England", "UK", "Thames", "Bus", "Queen"]],
+      ["Paris", ["France", "Love", "Eiffel", "City", "Croissant"]],
+      ["Dubai", ["UAE", "Rich", "Desert", "Mall", "Burj"]],
+      ["Mumbai", ["Bollywood", "India", "City", "Bombay", "Sea"]],
+      ["New Delhi", ["Capital", "India", "Government", "City", "North"]],
+      ["Toronto", ["Canada", "Drake", "CN Tower", "Ontario", "Raptors"]],
+      ["Vancouver", ["Canada", "Rain", "Mountains", "West Coast", "BC"]],
+      ["Miami", ["Florida", "Beach", "Party", "South Beach", "Hot"]],
+      ["Hospital", ["Doctor", "Nurse", "Sick", "Emergency", "Surgery"]],
+      ["Library", ["Books", "Quiet", "Read", "Borrow", "Shh"]],
+      ["Airport", ["Plane", "Flight", "Security", "Luggage", "Terminal"]],
+      ["Supermarket", ["Groceries", "Food", "Aisle", "Cart", "Cashier"]],
+      ["Pharmacy", ["Medicine", "Prescription", "Pills", "Drugstore", "Sick"]],
+      ["Laundromat", ["Wash", "Clothes", "Coins", "Dryer", "Soap"]],
+      ["Aquarium", ["Fish", "Sharks", "Tank", "Water", "Glass"]],
+      ["Planetarium", ["Stars", "Dome", "Space", "Show", "Sky"]],
+      ["Botanical Garden", ["Flowers", "Plants", "Trees", "Greenhouse", "Nature"]],
+      ["Cemetery", ["Graveyard", "Dead", "Tombstone", "Buried", "Ghost"]],
+      ["Lighthouse", ["Ocean", "Ships", "Beam", "Rocks", "Guide"]],
+      ["Treehouse", ["Kids", "Climb", "Wood", "Backyard", "Branches"]],
+      ["Igloo", ["Ice", "Snow", "House", "Cold", "Dome"]],
+      ["Skyscraper", ["Tall", "Building", "City", "Floors", "Elevator"]],
+
+      // --- ANIMALS & NATURE ---
+      ["Chameleon", ["Color", "Change", "Lizard", "Blend", "Tongue"]],
+      ["Flamingo", ["Pink", "Bird", "One Leg", "Stand", "Tropical"]],
+      ["Penguin", ["Tuxedo", "Ice", "Bird", "Antarctica", "Waddle"]],
+      ["Kangaroo", ["Australia", "Pouch", "Hop", "Jump", "Joey"]],
+      ["Koala", ["Australia", "Eucalyptus", "Tree", "Bear", "Sleep"]],
+      ["Platypus", ["Duck", "Bill", "Australia", "Beaver", "Eggs"]],
+      ["Sloth", ["Slow", "Tree", "Lazy", "Hang", "Jungle"]],
+      ["Cheetah", ["Fast", "Spots", "Run", "Cat", "Africa"]],
+      ["Giraffe", ["Neck", "Tall", "Spots", "Leaves", "Africa"]],
+      ["Hippopotamus", ["Water", "Heavy", "Africa", "Mouth", "River"]],
+      ["Rhinoceros", ["Horn", "Grey", "Charge", "Africa", "Thick"]],
+      ["Porcupine", ["Quills", "Sharp", "Spikes", "Animal", "Prick"]],
+      ["Hedgehog", ["Sonic", "Spikes", "Small", "Ball", "Cute"]],
+      ["Octopus", ["Eight", "Tentacles", "Ink", "Sea", "Arms"]],
+      ["Jellyfish", ["Sting", "Ocean", "Transparent", "Tentacles", "Float"]],
+      ["Seahorse", ["Ocean", "Small", "Tail", "Male", "Swim"]],
+      ["Narwhal", ["Unicorn", "Whale", "Horn", "Tusk", "Arctic"]],
+      ["Peacock", ["Feathers", "Colorful", "Bird", "India", "Tail"]],
+      ["Ostrich", ["Big", "Bird", "Fast", "Head", "Sand"]],
+      ["Owl", ["Night", "Hoot", "Wise", "Head", "Eyes"]],
+      ["Bat", ["Cave", "Night", "Vampire", "Blind", "Fly"]],
+      ["Mosquito", ["Bite", "Itch", "Blood", "Buzz", "Summer"]],
+      ["Firefly", ["Glow", "Night", "Bug", "Light", "Summer"]],
+      ["Caterpillar", ["Butterfly", "Cocoon", "Crawl", "Leaves", "Legs"]],
+      ["Scorpion", ["Sting", "Tail", "Desert", "Claws", "Poison"]],
+      ["Tarantula", ["Spider", "Hairy", "Big", "Eight Legs", "Scary"]],
+      ["Aloe Vera", ["Plant", "Sunburn", "Green", "Gel", "Skin"]],
+      ["Cactus", ["Desert", "Spikes", "Water", "Green", "Prickly"]],
+      ["Sunflower", ["Yellow", "Seeds", "Tall", "Summer", "Petal"]],
+      ["Four-Leaf Clover", ["Luck", "Green", "Irish", "St Patrick", "Rare"]],
+      ["Poison Ivy", ["Itch", "Rash", "Leaves", "Three", "Plant"]],
+      ["Bamboo", ["Panda", "Wood", "Fast", "Green", "Stick"]],
+      ["Quicksand", ["Sink", "Sand", "Trap", "Stuck", "Pull"]],
+      ["Volcano", ["Lava", "Erupt", "Mountain", "Hot", "Ash"]],
+      ["Glacier", ["Ice", "Titanic", "Melt", "Cold", "Giant"]],
+      ["Rainbow", ["Colors", "Rain", "Sun", "Sky", "Arch"]],
+      ["Northern Lights", ["Aurora", "Sky", "Green", "Arctic", "Night"]],
+
+      // --- SPORTS, HOBBIES & BODY ---
+      ["Penalty Kick", ["Soccer", "Goal", "Goalie", "Foul", "Shoot"]],
+      ["Slam Dunk", ["Basketball", "Hoop", "Jump", "Score", "NBA"]],
+      ["Home Run", ["Baseball", "Hit", "Bat", "Bases", "Fence"]],
+      ["Touchdown", ["Football", "End Zone", "Six Points", "NFL", "Score"]],
+      ["Hole in One", ["Golf", "Ball", "Club", "Shot", "Flag"]],
+      ["Hat Trick", ["Three", "Goals", "Hockey", "Soccer", "Score"]],
+      ["Knockout", ["Boxing", "Punch", "KO", "Down", "Ten"]],
+      ["Marathon", ["Run", "26 Miles", "Race", "Long", "Tired"]],
+      ["Relay Race", ["Baton", "Pass", "Team", "Run", "Track"]],
+      ["Triathlon", ["Swim", "Bike", "Run", "Three", "Race"]],
+      ["Gymnastics", ["Flip", "Balance", "Beam", "Olympics", "Flexible"]],
+      ["Figure Skating", ["Ice", "Spin", "Winter", "Olympics", "Blades"]],
+      ["Surfing", ["Wave", "Board", "Ocean", "Beach", "Ride"]],
+      ["Scuba Diving", ["Underwater", "Tank", "Oxygen", "Ocean", "Fish"]],
+      ["Skydiving", ["Parachute", "Plane", "Jump", "Fly", "Fall"]],
+      ["Bungee Jumping", ["Cord", "Bridge", "Fall", "Bounce", "Rope"]],
+      ["Rock Climbing", ["Wall", "Rope", "Harness", "Hold", "Mountain"]],
+      ["Yoga", ["Stretch", "Mat", "Pose", "Meditate", "Flexible"]],
+      ["CrossFit", ["Workout", "Gym", "Intense", "Weights", "Exercise"]],
+      ["Bench Press", ["Weights", "Chest", "Gym", "Barbell", "Lift"]],
+      ["Squat", ["Legs", "Gym", "Weights", "Down", "Exercise"]],
+      ["Plank", ["Abs", "Core", "Hold", "Floor", "Wood"]],
+      ["Push-Up", ["Arms", "Floor", "Chest", "Exercise", "Down"]],
+      ["Brain", ["Think", "Head", "Mind", "Smart", "Organ"]],
+      ["Skeleton", ["Bones", "Halloween", "Skull", "Body", "Spooky"]],
+      ["Funny Bone", ["Elbow", "Hit", "Hurt", "Nerve", "Laugh"]],
+      ["Wisdom Tooth", ["Dentist", "Pull", "Back", "Mouth", "Pain"]],
+      ["Dimples", ["Cheeks", "Smile", "Cute", "Face", "Indent"]],
+      ["Freckles", ["Dots", "Face", "Sun", "Skin", "Redhead"]],
+      ["Tattoo", ["Ink", "Skin", "Needle", "Permanent", "Artist"]],
+      ["Mullet", ["Haircut", "Business", "Party", "Back", "80s"]],
+      ["Unibrow", ["Eyebrows", "One", "Middle", "Hair", "Face"]],
+      ["Double Chin", ["Neck", "Face", "Fat", "Selfie", "Under"]],
+      ["Adrenaline", ["Rush", "Heart", "Fast", "Excited", "Scared"]],
+      ["Reflex", ["Fast", "React", "Knee", "Doctor", "Automatic"]],
+
+      // --- ADDITIONAL VARIETY PACK (POP CULTURE, EVERYDAY, TRICKY WORDS) ---
+      ["Deja Vu", ["Again", "Seen", "Before", "Feeling", "Same"]],
+      ["FOMO", ["Fear", "Missing Out", "Party", "Social Media", "Left Out"]],
+      ["Selfie", ["Camera", "Phone", "Picture", "Face", "Front"]],
+      ["Vibe Check", ["Mood", "Energy", "Feeling", "Test", "Gen Z"]],
+      ["Flexing", ["Show Off", "Muscle", "Rich", "Brag", "Money"]],
+      ["Gaslighting", ["Manipulate", "Crazy", "Lie", "Truth", "Doubt"]],
+      ["Catfish", ["Fake", "Online", "Dating", "Profile", "Pretend"]],
+      ["Friendzone", ["Crush", "Love", "Just", "Dating", "Rejected"]],
+      ["Third Wheel", ["Couple", "Extra", "Date", "Alone", "Tag Along"]],
+      ["Wingman", ["Friend", "Date", "Help", "Bar", "Flirt"]],
+      ["Small Talk", ["Weather", "Conversation", "Awkward", "Elevator", "Chat"]],
+      ["Icebreaker", ["Question", "Meet", "Group", "Start", "Ship"]],
+      ["Bucket List", ["Die", "Goals", "Before", "Do", "Dreams"]],
+      ["Comfort Zone", ["Safe", "Try", "New", "Scared", "Step Out"]],
+      ["Peer Pressure", ["Friends", "Force", "Group", "Fit In", "Do"]],
+      ["White Elephant", ["Gift", "Exchange", "Christmas", "Steal", "Party"]],
+      ["Secret Santa", ["Christmas", "Gift", "Anonymous", "Name", "Draw"]],
+      ["Potluck", ["Food", "Bring", "Dish", "Party", "Share"]],
+      ["Open Bar", ["Free", "Drinks", "Wedding", "Alcohol", "Party"]],
+      ["Happy Hour", ["Drinks", "Cheap", "Bar", "Work", "After"]],
+      ["Doggie Bag", ["Leftovers", "Restaurant", "Take Home", "Box", "Food"]],
+      ["Tipping", ["Waiter", "Restaurant", "Percent", "Money", "Service"]],
+      ["Split the Bill", ["Pay", "Restaurant", "Share", "Check", "Half"]],
+      ["Window Shopping", ["Look", "Store", "Buy", "Mall", "Glass"]],
+      ["Impulse Buy", ["Spontaneous", "Store", "Checkout", "Need", "Spend"]],
+      ["Buyer's Remorse", ["Regret", "Purchase", "Money", "Return", "Spent"]],
+      ["Receipt", ["Paper", "Store", "Proof", "Buy", "Return"]],
+      ["Coupon", ["Discount", "Save", "Code", "Off", "Store"]],
+      ["Warranty", ["Broken", "Fix", "Replace", "Years", "Guarantee"]],
+      ["Deposit", ["Bank", "Money", "Rent", "Back", "Put"]],
+      ["Mortgage", ["House", "Loan", "Bank", "Pay", "Monthly"]],
+      ["Credit Score", ["Bank", "Loan", "Number", "Good", "Debt"]],
+      ["Tax Refund", ["IRS", "Money", "Back", "April", "File"]],
+      ["Minimum Wage", ["Hour", "Pay", "Job", "Lowest", "Money"]],
+      ["Overtime", ["Extra", "Work", "Hours", "Pay", "Sports"]],
+      ["Sick Day", ["Work", "Call In", "Ill", "Fake", "Home"]],
+      ["Two Weeks Notice", ["Quit", "Job", "Leave", "Boss", "Resign"]],
+      ["Burnout", ["Tired", "Stress", "Work", "Exhausted", "Overworked"]],
+      ["Side Hustle", ["Extra", "Money", "Job", "Second", "Work"]],
+      ["Networking", ["Contacts", "Job", "LinkedIn", "Meet", "Career"]],
+      ["LinkedIn", ["Job", "Resume", "Professional", "Network", "Social"]],
+      ["Zoom Call", ["Video", "Meeting", "Mute", "Camera", "Work"]],
+      ["You're on Mute", ["Zoom", "Speak", "Hear", "Microphone", "Meeting"]],
+      ["Reply All", ["Email", "Everyone", "Mistake", "Send", "Work"]],
+      ["Out of Office", ["Email", "Vacation", "Auto", "Away", "Reply"]],
+      ["Deadline", ["Due", "Date", "Late", "Finish", "Project"]],
+      ["Brainstorm", ["Ideas", "Group", "Think", "Meeting", "List"]],
+      ["Spreadsheet", ["Excel", "Cells", "Numbers", "Rows", "Columns"]],
+      ["PowerPoint", ["Slides", "Presentation", "Microsoft", "Bullet", "Talk"]],
+      ["Flash Drive", ["USB", "Save", "Files", "Plug", "Memory"]],
+      ["Hard Drive", ["Computer", "Storage", "Data", "GB", "Save"]],
+      ["Incognito", ["Secret", "Disguise", "Browser", "Hide", "Identity"]],
+      ["Firewall", ["Security", "Block", "Computer", "Network", "Protect"]],
+      ["Phishing", ["Scam", "Email", "Fake", "Password", "Link"]],
+      ["Cookies", ["Browser", "Accept", "Website", "Bake", "Track"]],
+      ["Buffering", ["Loading", "Slow", "Video", "Circle", "Internet"]],
+      ["Pixel", ["Screen", "Dot", "Resolution", "Image", "Square"]],
+      ["Green Screen", ["Movie", "Background", "Effects", "CGI", "Behind"]],
+      ["Stunt Double", ["Actor", "Dangerous", "Movie", "Action", "Replace"]],
+      ["Bloopers", ["Mistakes", "Funny", "Outtakes", "Credits", "Laugh"]],
+      ["Cliffhanger", ["Suspense", "Ending", "Episode", "Wait", "Next"]],
+      ["Flashback", ["Memory", "Past", "Scene", "Before", "Movie"]],
+      ["Foreshadowing", ["Hint", "Future", "Story", "Clue", "Later"]],
+      ["Monologue", ["Speech", "One", "Actor", "Talk", "Alone"]],
+      ["Improv", ["Script", "Make Up", "Comedy", "Stage", "Act"]],
+      ["Sitcom", ["Comedy", "TV", "Laugh Track", "Episodes", "Friends"]],
+      ["Reality TV", ["Kardashians", "Bachelor", "Unscripted", "Drama", "Show"]],
+      ["Documentary", ["Real", "Facts", "Movie", "True", "Nature"]],
+      ["Horror Movie", ["Scary", "Scream", "Ghost", "Killer", "Jump"]],
+      ["Rom-Com", ["Love", "Funny", "Movie", "Couple", "Happy Ending"]],
+      ["Action Hero", ["Explosions", "Save", "Fight", "Muscles", "Movie"]],
+      ["Antihero", ["Deadpool", "Villain", "Good", "Bad", "Rules"]],
+      ["Origin Story", ["Beginning", "Superhero", "How", "Become", "Past"]],
+      ["Multiverse", ["Spider-Man", "Marvel", "Parallel", "Worlds", "Alternate"]],
+      ["Time Travel", ["Past", "Future", "Machine", "Back to the Future", "Year"]],
+      ["Alien", ["Space", "UFO", "Green", "Planet", "ET"]],
+      ["Robot", ["Machine", "Metal", "AI", "Program", "Human"]],
+      ["Cyborg", ["Half", "Human", "Machine", "Terminator", "Robot"]],
+      ["Hologram", ["3D", "Light", "Projection", "Star Wars", "Image"]],
+      ["Force Field", ["Shield", "Protect", "Energy", "Sci-Fi", "Invisible"]],
+      ["Teleport", ["Instant", "Move", "Beam", "Disappear", "Place"]],
+      ["Invisibility", ["See", "Disappear", "Cloak", "Superpower", "Transparent"]],
+      ["Telepathy", ["Mind", "Read", "Thoughts", "Brain", "Talk"]],
+      ["Telekinesis", ["Move", "Mind", "Objects", "Eleven", "Power"]],
+      ["Kryptonite", ["Superman", "Weakness", "Green", "Rock", "Planet"]],
+      ["Batmobile", ["Car", "Batman", "Gotham", "Black", "Drive"]],
+      ["Infinity Gauntlet", ["Thanos", "Stones", "Snap", "Glove", "Marvel"]],
+      ["Sorting Hat", ["Hogwarts", "House", "Gryffindor", "Head", "Talk"]],
+      ["Invisibility Cloak", ["Harry Potter", "Hide", "Wear", "See", "Deathly Hallows"]],
+      ["Butterbeer", ["Harry Potter", "Drink", "Sweet", "Hogsmeade", "Wizard"]],
+      ["Muggle", ["Non-Magic", "Human", "Harry Potter", "Wizard", "Normal"]],
+      ["Force", ["Star Wars", "Jedi", "May", "With You", "Use"]],
+      ["Stormtrooper", ["White", "Armor", "Miss", "Star Wars", "Shoot"]],
+      ["Death Star", ["Moon", "Space Station", "Star Wars", "Destroy", "Laser"]],
+      ["Millennium Falcon", ["Han Solo", "Ship", "Chewbacca", "Star Wars", "Fast"]],
+      ["Pokeball", ["Catch", "Throw", "Red", "White", "Pokemon"]],
+      ["Super Mushroom", ["Mario", "Grow", "Big", "Red", "Power-Up"]],
+      ["Blue Shell", ["Mario Kart", "First Place", "Hit", "Spike", "Race"]],
+      ["Rainbow Road", ["Mario Kart", "Fall Off", "Track", "Colorful", "Hard"]],
+      ["Fatality", ["Mortal Kombat", "Finish Him", "Kill", "Move", "Win"]],
+      ["Creeper", ["Minecraft", "Green", "Explode", "Hiss", "Blow Up"]],
+      ["Loot Box", ["Random", "Reward", "Open", "Game", "Item"]],
+      ["Boss Fight", ["Final", "Level", "Hard", "Enemy", "Beat"]],
+      ["Easter Egg", ["Hidden", "Secret", "Game", "Movie", "Find"]],
+      ["Speedrun", ["Fast", "Beat", "Record", "Time", "Game"]],
+      ["Lag", ["Slow", "Internet", "Delay", "Ping", "Freeze"]],
+      ["Noob", ["Beginner", "New", "Bad", "Player", "Rookie"]],
+      ["Spawn", ["Appear", "Start", "Point", "Respawn", "Map"]],
+      ["Cheat Code", ["Secret", "Infinite", "Unlock", "Game", "Button"]],
+      ["Side Quest", ["Main", "Story", "Mission", "Optional", "RPG"]],
+      ["Checkpoint", ["Save", "Die", "Progress", "Reach", "Level"]],
+      ["Health Potion", ["Red", "Drink", "Heal", "HP", "Restore"]],
+      ["Inventory", ["Bag", "Items", "Carry", "Full", "Slots"]],
+      ["NPC", ["Character", "Non-Player", "Computer", "Talk", "Background"]],
+      ["Avatar", ["Character", "Profile", "Picture", "Blue", "Represent"]],
+      ["Joystick", ["Controller", "Arcade", "Move", "Thumb", "Play"]],
+      ["Virtual Reality", ["VR", "Headset", "Oculus", "3D", "World"]],
+      ["Augmented Reality", ["Pokemon Go", "Camera", "Phone", "Overlay", "Real"]],
+      ["Self-Driving Car", ["Tesla", "Autopilot", "Autonomous", "No Hands", "AI"]],
+      ["Electric Vehicle", ["Battery", "Charge", "Tesla", "Gas", "Car"]],
+      ["Hybrid Car", ["Gas", "Electric", "Prius", "Fuel", "Both"]],
+      ["Convertible", ["Roof", "Down", "Top", "Car", "Sun"]],
+      ["Limousine", ["Long", "Car", "Prom", "Rich", "Driver"]],
+      ["Ambulance", ["Hospital", "Siren", "Emergency", "Paramedic", "911"]],
+      ["Fire Truck", ["Red", "Hose", "Ladder", "Siren", "Water"]],
+      ["Garbage Truck", ["Trash", "Smell", "Collect", "Bins", "Morning"]],
+      ["Ice Cream Truck", ["Music", "Summer", "Kids", "Cone", "Cold"]],
+      ["Food Truck", ["Street", "Tacos", "Window", "Cook", "Mobile"]],
+      ["Submarine", ["Underwater", "Navy", "Periscope", "Ocean", "Deep"]],
+      ["Helicopter", ["Blades", "Fly", "Hover", "Chopper", "Sky"]],
+      ["Hot Air Balloon", ["Basket", "Sky", "Float", "Fire", "Colorful"]],
+      ["Gondola", ["Venice", "Boat", "Ski", "Row", "Water"]],
+      ["Kayak", ["Paddle", "Boat", "Water", "One", "River"]],
+      ["Yacht", ["Rich", "Boat", "Ocean", "Luxury", "Sail"]],
+      ["Cruise Ship", ["Vacation", "Ocean", "Boat", "Buffet", "Port"]],
+      ["Bullet Train", ["Fast", "Japan", "Rail", "Speed", "Track"]],
+      ["Subway", ["Underground", "Train", "New York", "Metro", "Sandwich"]],
+      ["Car Wash", ["Soap", "Clean", "Water", "Drive", "Brushes"]],
+      ["Gas Station", ["Fuel", "Pump", "Car", "Fill", "Snacks"]],
+      ["Toll Booth", ["Pay", "Highway", "Bridge", "Money", "Gate"]],
+      ["Speed Bump", ["Slow", "Road", "Drive", "Over", "Car"]],
+      ["Roundabout", ["Circle", "Traffic", "Yield", "Drive", "Turn"]],
+      ["Crosswalk", ["Pedestrian", "Walk", "Street", "Lines", "White"]],
+      ["Traffic Jam", ["Cars", "Stuck", "Rush Hour", "Slow", "Honk"]],
+      ["Carpool", ["Share", "Ride", "Lane", "Drive", "Together"]],
+      ["Drive-Thru", ["Fast Food", "Window", "Car", "Order", "McDonald's"]],
+      ["Valet Parking", ["Keys", "Hotel", "Restaurant", "Tip", "Car"]],
+      ["Detour", ["Road", "Closed", "Around", "Sign", "Route"]],
+      ["U-Turn", ["Reverse", "Direction", "Back", "Drive", "180"]],
+      ["Blind Spot", ["Mirror", "Car", "Check", "Lane", "See"]],
+      ["Airbag", ["Crash", "Safety", "Car", "Inflate", "Steering Wheel"]],
+      ["Seatbelt", ["Buckle", "Safety", "Car", "Click", "Strap"]],
+      ["Windshield Wiper", ["Rain", "Glass", "Car", "Clean", "Blade"]],
+      ["Horn", ["Honk", "Beep", "Car", "Steering Wheel", "Loud"]],
+      ["Odometer", ["Miles", "Distance", "Car", "Dashboard", "Read"]],
+      ["Jump Start", ["Battery", "Dead", "Cables", "Car", "Engine"]],
+      ["Flat Tire", ["Spare", "Air", "Jack", "Wheel", "Nail"]],
+      ["Passport Control", ["Customs", "Border", "Airport", "Stamp", "Line"]],
+      ["Turbulence", ["Airplane", "Bumpy", "Seatbelt", "Shake", "Fly"]],
+      ["Jet Bridge", ["Plane", "Walk", "Gate", "Airport", "Board"]],
+      ["Carry-On", ["Bag", "Overhead", "Plane", "Luggage", "Small"]],
+      ["Layover", ["Connecting", "Flight", "Wait", "Airport", "Hours"]],
+      ["Duty-Free", ["Airport", "Tax", "Perfume", "Chocolate", "Shop"]],
+      ["First Class", ["Expensive", "Plane", "Seat", "Front", "Luxury"]],
+      ["Emergency Exit", ["Row", "Plane", "Door", "Legroom", "Help"]],
+      ["Black Box", ["Plane", "Crash", "Recorder", "Orange", "Flight"]],
+      ["Souvenir", ["Vacation", "Gift", "Magnet", "Trip", "Remember"]],
+      ["Postcard", ["Mail", "Vacation", "Picture", "Stamp", "Write"]],
+      ["Currency Exchange", ["Money", "Convert", "Travel", "Rate", "Foreign"]],
+      ["Hostel", ["Cheap", "Travel", "Bunk", "Backpacker", "Hotel"]],
+      ["All-Inclusive", ["Resort", "Food", "Drinks", "Free", "Vacation"]],
+      ["Buffet", ["All You Can Eat", "Food", "Plate", "Line", "Self-Serve"]],
+      ["Room Service", ["Hotel", "Order", "Bed", "Food", "Call"]],
+      ["Do Not Disturb", ["Sign", "Door", "Hotel", "Sleep", "Knock"]],
+      ["Minibar", ["Hotel", "Expensive", "Fridge", "Drinks", "Snacks"]],
+      ["Concierge", ["Hotel", "Desk", "Help", "Recommendations", "Lobby"]],
+      ["Check-In", ["Hotel", "Airport", "Desk", "Key", "Arrive"]],
+      ["Late Checkout", ["Hotel", "Leave", "Noon", "Stay", "Extra"]],
+      ["Sightseeing", ["Tourist", "Camera", "Landmarks", "Tour", "Bus"]],
+      ["Tour Guide", ["Group", "Talk", "History", "Follow", "Umbrella"]],
+      ["Audio Guide", ["Museum", "Headphones", "Listen", "Art", "Number"]],
+      ["Gift Shop", ["Exit", "Museum", "Buy", "Souvenir", "Store"]],
+      ["Roller Coaster", ["Theme Park", "Loop", "Scream", "Ride", "Fast"]],
+      ["Ferris Wheel", ["Carnival", "Circle", "High", "View", "Slow"]],
+      ["Bumper Cars", ["Crash", "Drive", "Carnival", "Ride", "Hit"]],
+      ["Haunted House", ["Scary", "Ghosts", "Halloween", "Scream", "Walk"]],
+      ["Escape Room", ["Puzzles", "Locked", "Clues", "Hour", "Team"]],
+      ["Laser Tag", ["Vest", "Shoot", "Dark", "Neon", "Vest"]],
+      ["Paintball", ["Gun", "Shoot", "Hurt", "Color", "Mask"]],
+      ["Go-Kart", ["Race", "Track", "Small", "Car", "Drive"]],
+      ["Mini Golf", ["Putt", "Windmill", "Course", "Ball", "Hole"]],
+      ["Batting Cage", ["Baseball", "Hit", "Machine", "Helmet", "Swing"]],
+      ["Driving Range", ["Golf", "Bucket", "Hit", "Balls", "Practice"]],
+      ["Ski Lift", ["Mountain", "Snow", "Chair", "Up", "Ride"]],
+      ["Snowboarding", ["Mountain", "Winter", "Ride", "Feet", "Halfpipe"]],
+      ["Ice Fishing", ["Hole", "Frozen", "Lake", "Cold", "Catch"]],
+      ["Bonfire", ["Fire", "Beach", "Wood", "Night", "Marshmallows"]],
+      ["S'mores", ["Marshmallow", "Chocolate", "Graham Cracker", "Campfire", "Melt"]],
+      ["Sleeping Bag", ["Camp", "Zip", "Tent", "Warm", "Ground"]],
+      ["Bug Spray", ["Mosquito", "Insects", "Bite", "Camping", "Skin"]],
+      ["Sunscreen", ["SPF", "Beach", "Burn", "Lotion", "UV"]],
+      ["Flip-Flops", ["Sandals", "Beach", "Toes", "Summer", "Shoes"]],
+      ["Beach Towel", ["Sand", "Dry", "Lay", "Sun", "Ocean"]],
+      ["Sandcastle", ["Bucket", "Shovel", "Beach", "Build", "Wave"]],
+      ["Lifeguard", ["Pool", "Beach", "Save", "Whistle", "Swim"]],
+      ["Diving Board", ["Pool", "Jump", "Bounce", "Water", "High"]],
+      ["Hot Tub", ["Jacuzzi", "Warm", "Bubbles", "Water", "Relax"]],
+      ["Sauna", ["Steam", "Hot", "Sweat", "Wood", "Towel"]],
+      ["Massage", ["Back", "Relax", "Spa", "Rub", "Knots"]],
+      ["Manicure", ["Nails", "Polish", "Hands", "Salon", "File"]],
+      ["Pedicure", ["Toes", "Feet", "Nails", "Polish", "Salon"]],
+      ["Haircut", ["Barber", "Scissors", "Salon", "Trim", "Style"]],
+      ["Beard", ["Face", "Hair", "Shave", "Chin", "Mustache"]],
+      ["Mustache", ["Upper Lip", "Hair", "Face", "Shave", "Movember"]],
+      ["Pigtails", ["Hair", "Two", "Ties", "Kids", "Sides"]],
+      ["Ponytail", ["Hair", "Back", "Tie", "Band", "Pull"]],
+      ["Dreadlocks", ["Hair", "Bob Marley", "Twists", "Rasta", "Long"]],
+      ["Wig", ["Fake", "Hair", "Head", "Bald", "Costume"]],
+      ["Contact Lenses", ["Eyes", "Glasses", "See", "Vision", "Solution"]],
+      ["Braces", ["Teeth", "Metal", "Orthodontist", "Straight", "Smile"]],
+      ["Cavity", ["Tooth", "Dentist", "Sugar", "Filling", "Drill"]],
+      ["Root Canal", ["Dentist", "Tooth", "Pain", "Nerve", "Surgery"]],
+      ["Stitches", ["Cut", "Doctor", "Sew", "Needle", "Hospital"]],
+      ["Cast", ["Broken", "Bone", "Sign", "Arm", "Leg"]],
+      ["Crutches", ["Walk", "Broken", "Leg", "Underarm", "Support"]],
+      ["Wheelchair", ["Sit", "Roll", "Ramp", "Wheels", "Walk"]],
+      ["Band-Aid", ["Cut", "Stick", "Finger", "Cover", "Bleed"]],
+      ["Ice Pack", ["Cold", "Swelling", "Injury", "Freeze", "Bruise"]],
+      ["Cough Syrup", ["Medicine", "Throat", "Sick", "Spoon", "Liquid"]],
+      ["Vitamins", ["Pills", "Healthy", "Daily", "C", "D"]],
+      ["Allergy", ["Sneeze", "Pollen", "Peanuts", "Itchy", "Reaction"]],
+      ["Cholesterol", ["Heart", "Fat", "Blood", "Food", "High"]],
+      ["Metabolism", ["Burn", "Calories", "Fast", "Slow", "Food"]],
+      ["DNA", ["Genes", "Helix", "Test", "23andMe", "Blood"]],
+      ["Cloning", ["Copy", "Identical", "Sheep", "Science", "Twin"]],
+      ["Microscope", ["Small", "Cells", "Science", "Lab", "Look"]],
+      ["Periodic Table", ["Elements", "Chemistry", "Gold", "Oxygen", "Chart"]],
+      ["Black Hole", ["Space", "Gravity", "Light", "Star", "Suck"]],
+      ["Shooting Star", ["Wish", "Meteor", "Sky", "Night", "Fall"]],
+      ["Milky Way", ["Galaxy", "Space", "Chocolate", "Earth", "Stars"]],
+      ["Solar System", ["Planets", "Sun", "Orbit", "Earth", "Mars"]],
+      ["Full Moon", ["Night", "Round", "Werewolf", "Sky", "Bright"]],
+      ["High Tide", ["Ocean", "Beach", "Moon", "Water", "Waves"]],
+      ["Fossil", ["Dinosaur", "Bone", "Rock", "Ancient", "Dig"]],
+      ["Pyramid Scheme", ["Scam", "Recruit", "Money", "MLM", "Sell"]],
+      ["Stock Market", ["Wall Street", "Invest", "Shares", "Buy", "Sell"]],
+      ["Inflation", ["Prices", "Money", "Expensive", "Economy", "Rise"]],
+      ["Recession", ["Economy", "Down", "Jobs", "Money", "Crisis"]],
+      ["Monopoly", ["Control", "Company", "One", "Market", "Board Game"]],
+      ["Copyright", ["Legal", "Own", "Copy", "Symbol", "Music"]],
+      ["Patent", ["Invention", "Protect", "Idea", "Legal", "Own"]],
+      ["Trademark", ["Brand", "Logo", "Symbol", "Name", "TM"]],
+      ["Whistleblower", ["Expose", "Secret", "Company", "Report", "Illegal"]],
+      ["Undercover", ["Cop", "Secret", "Disguise", "Spy", "Operation"]],
+      ["Polygraph", ["Lie Detector", "Test", "Truth", "Machine", "Questions"]],
+      ["Fingerprint", ["Crime", "Detective", "Unique", "Touch", "Hand"]],
+      ["Handwriting", ["Pen", "Cursive", "Signature", "Write", "Neat"]],
+      ["Calligraphy", ["Fancy", "Writing", "Pen", "Art", "Letters"]],
+      ["Graffiti", ["Spray Paint", "Wall", "Street", "Art", "Tag"]],
+      ["Sculpture", ["Statue", "Clay", "Marble", "Art", "Carve"]],
+      ["Origami", ["Fold", "Paper", "Japanese", "Bird", "Art"]],
+      ["Pottery", ["Clay", "Wheel", "Bowl", "Kiln", "Ceramic"]],
+      ["Knitting", ["Yarn", "Needles", "Sweater", "Grandma", "Wool"]],
+      ["Embroidery", ["Thread", "Stitch", "Fabric", "Design", "Needle"]],
+      ["Scrapbook", ["Photos", "Memories", "Glue", "Album", "Stickers"]],
+      ["Time Capsule", ["Bury", "Future", "Open", "Box", "Years"]],
+      ["Family Tree", ["Ancestors", "Relatives", "Generations", "Chart", "History"]],
+      ["Dejavu", ["Again", "Seen", "Before", "Feeling", "Experience"]],
+      ["Daylight Saving", ["Clock", "Hour", "Spring", "Fall", "Time"]],
+      ["Leap Year", ["February", "29", "Four", "Calendar", "Extra"]],
+      ["New Year's Resolution", ["January", "Goal", "Gym", "Promise", "Quit"]],
+      ["April Fools", ["Prank", "Joke", "First", "Trick", "Month"]],
+      ["Halloween", ["Costume", "Candy", "October", "Trick or Treat", "Spooky"]],
+      ["Thanksgiving", ["Turkey", "November", "Grateful", "Dinner", "Family"]],
+      ["Valentine's Day", ["Love", "February", "Roses", "Chocolate", "Heart"]],
+      ["St. Patrick's Day", ["Green", "Irish", "March", "Leprechaun", "Beer"]],
+      ["Mother's Day", ["Mom", "May", "Flowers", "Card", "Celebrate"]],
+      ["Father's Day", ["Dad", "June", "Tie", "Grill", "Celebrate"]],
+      ["Leap of Faith", ["Jump", "Trust", "Risk", "Believe", "Unknown"]],
+      ["Silver Lining", ["Cloud", "Positive", "Good", "Bad", "Hope"]],
+      ["Elephant in the Room", ["Ignore", "Obvious", "Problem", "Talk", "Big"]],
+      ["Piece of Cake", ["Easy", "Simple", "Eat", "Dessert", "Effortless"]],
+      ["Break a Leg", ["Good Luck", "Theater", "Actor", "Stage", "Perform"]],
+      ["Bite the Bullet", ["Pain", "Do It", "Tough", "Endure", "Hard"]],
+      ["Spill the Beans", ["Secret", "Tell", "Gossip", "Reveal", "Talk"]],
+      ["Under the Weather", ["Sick", "Ill", "Feel", "Cold", "Rain"]],
+      ["Cold Feet", ["Nervous", "Wedding", "Scared", "Back Out", "Marry"]],
+      ["Sweet Tooth", ["Candy", "Sugar", "Crave", "Dessert", "Chocolate"]],
+      ["Green Thumb", ["Plants", "Garden", "Grow", "Good", "Flowers"]],
+      ["Night Owl", ["Late", "Awake", "Sleep", "Morning", "Stay Up"]],
+      ["Early Bird", ["Worm", "Morning", "Wake", "First", "Up"]],
+      ["Couch Potato", ["Lazy", "TV", "Sit", "Watch", "Chips"]],
+      ["Social Butterfly", ["Talk", "Friends", "Party", "Outgoing", "People"]],
+      ["Lone Wolf", ["Alone", "Solo", "Independent", "Pack", "By Yourself"]],
+      ["Black Sheep", ["Family", "Different", "Odd", "Outcast", "White"]],
+      ["Copycat", ["Imitate", "Same", "Follow", "Repeat", "Steal"]],
+      ["Scapegoat", ["Blame", "Fault", "Innocent", "Take", "Punish"]],
+      ["Underdog", ["Lose", "Expected", "Win", "Surprise", "Weak"]],
+      ["Dark Horse", ["Surprise", "Winner", "Unknown", "Unexpected", "Race"]],
+      ["Jack of All Trades", ["Master", "None", "Many", "Skills", "Good"]],
+      ["Backseat Driver", ["Car", "Tell", "Passenger", "Annoying", "Directions"]],
+      ["Monday Blues", ["Work", "Weekend", "Sad", "Start", "Week"]],
+      ["TGIF", ["Friday", "Thank God", "Weekend", "Work", "Done"]],
+      ["Deja Vu", ["Happened", "Before", "Feeling", "Memory", "Same"]]
+    ];
+
+    /* ==========================================================================
+       DEDUPLICATE DECK BY TARGET WORD AT RUNTIME (Guarantees 100% Distinct Targets)
+       ========================================================================== */
+    const UNIQUE_DECK = (() => {
+      const seen = new Set();
+      const cleaned = [];
+      for (const [target, forbidden] of TABOO_DECK) {
+        const key = target.trim().toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          cleaned.push({ id: cleaned.length, target, forbidden });
+        }
+      }
+      return cleaned;
+    })();
+
+    /* ==========================================================================
+       APP STATE & LOCALSTORAGE PERSISTENCE
+       ========================================================================== */
+    const STORAGE_KEY = "taboo_mobile_party_v1";
+    const TEAM_COLORS = ["#EF4444", "#3B82F6", "#10B981", "#F59E0B"];
+
+    let state = {
+      teamCount: 2,
+      teams: [
+        { name: "Team A", score: 0 },
+        { name: "Team B", score: 0 },
+        { name: "Team C", score: 0 },
+        { name: "Team D", score: 0 }
+      ],
+      currentTeamIdx: 0,
+      turnDuration: 60,
+      playedCardIds: [], // Persistent across sessions until reset
+      muted: false
+    };
+
+    // Ephemeral Active Turn State
+    let turnState = {
+      timeLeft: 60,
+      running: false,
+      paused: false,
+      currentCard: null,
+      history: [] // [{ card, status: 'got' | 'skipped' }]
+    };
+
+    let timerInterval = null;
+    let audioCtx = null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state = { ...state, ...parsed };
+          if (!Array.isArray(state.playedCardIds)) state.playedCardIds = [];
+          if (!Array.isArray(state.teams) || state.teams.length < 4) {
+            state.teams = [
+              { name: "Team A", score: 0 },
+              { name: "Team B", score: 0 },
+              { name: "Team C", score: 0 },
+              { name: "Team D", score: 0 }
+            ];
+          }
+        }
+      } catch (e) {
+        console.warn("Storage load failed:", e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          teamCount: state.teamCount,
+          teams: state.teams,
+          currentTeamIdx: state.currentTeamIdx,
+          turnDuration: state.turnDuration,
+          playedCardIds: state.playedCardIds,
+          muted: state.muted
+        }));
+      } catch (e) {
+        console.warn("Storage save failed:", e);
+      }
+    }
+
+    /* ==========================================================================
+       WEB AUDIO API SYNTHESIZER (Chime, Skip Swoosh, Warning Tick, Buzzer)
+       ========================================================================== */
+    function ensureAudio() {
+      if (!audioCtx) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) audioCtx = new Ctx();
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playGotItChime() {
+      if (state.muted) return;
+      try {
+        const ctx = ensureAudio();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [587.33, 880].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, now + i * 0.06);
+          gain.gain.setValueAtTime(0.22, now + i * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.18);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.06);
+          osc.stop(now + i * 0.06 + 0.2);
+        });
+      } catch (e) {}
+    }
+
+    function playSkipClick() {
+      if (state.muted) return;
+      try {
+        const ctx = ensureAudio();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.09);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      } catch (e) {}
+    }
+
+    function playWarningTick(urgent) {
+      if (state.muted) return;
+      try {
+        const ctx = ensureAudio();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(urgent ? 960 : 720, now);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      } catch (e) {}
+    }
+
+    function playEndBuzzer() {
+      if (state.muted) return;
+      try {
+        const ctx = ensureAudio();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [140, 148].forEach((freq) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(freq, now);
+          osc.frequency.linearRampToValueAtTime(freq - 20, now + 0.85);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.setValueAtTime(0.25, now + 0.65);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.95);
+        });
+      } catch (e) {}
+    }
+
+    function toggleMute() {
+      state.muted = !state.muted;
+      updateMuteUI();
+      saveState();
+      if (!state.muted) playGotItChime();
+    }
+
+    function updateMuteUI() {
+      document.getElementById("soundIcon").textContent = state.muted ? "🔇" : "🔊";
+      document.getElementById("soundLabel").textContent = state.muted ? "Sound: Off" : "Sound: On";
+    }
+
+    /* ==========================================================================
+       SCREEN NAVIGATION & SETUP UI
+       ========================================================================== */
+    function showScreen(screenId) {
+      document.querySelectorAll(".screen").forEach((el) => el.classList.remove("active"));
+      document.getElementById(screenId).classList.add("active");
+      updateDeckCounters();
+    }
+
+    function updateDeckCounters() {
+      const total = UNIQUE_DECK.length;
+      const remaining = Math.max(0, total - state.playedCardIds.length);
+      document.getElementById("deckCounterPill").textContent = `${remaining} / ${total} left`;
+      document.getElementById("privacyDeckPill").textContent = `${remaining} left`;
+    }
+
+    function setTeamCount(count) {
+      state.teamCount = count;
+      if (state.currentTeamIdx >= count) state.currentTeamIdx = 0;
+      renderTeamsEditor();
+      saveState();
+    }
+
+    function renderTeamsEditor() {
+      document.querySelectorAll(".team-count-row .chip-btn").forEach((btn) => {
+        btn.classList.toggle("active", Number(btn.dataset.teams) === state.teamCount);
+      });
+
+      const container = document.getElementById("teamsEditor");
+      let html = "";
+      for (let i = 0; i < state.teamCount; i++) {
+        const team = state.teams[i];
+        html += `
+          <div class="team-input-row">
+            <span class="team-dot" style="background: ${TEAM_COLORS[i]};"></span>
+            <input
+              type="text"
+              class="team-name-field"
+              value="${escapeHTML(team.name)}"
+              maxlength="20"
+              aria-label="Team ${i + 1} Name"
+              onchange="updateTeamName(${i}, this.value)"
+            />
+            <span class="team-score-pill">${team.score} pts</span>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function updateTeamName(idx, val) {
+      const clean = val.trim();
+      if (clean) {
+        state.teams[idx].name = clean;
+        saveState();
+      } else {
+        renderTeamsEditor();
+      }
+    }
+
+    function setTurnDuration(seconds) {
+      state.turnDuration = seconds;
+      document.getElementById("customSecRow").classList.remove("visible");
+      updateTimerSettingsUI();
+      saveState();
+    }
+
+    function toggleCustomSecInput() {
+      const row = document.getElementById("customSecRow");
+      row.classList.toggle("visible");
+      if (row.classList.contains("visible")) {
+        document.getElementById("customSecInput").value = state.turnDuration;
+        document.getElementById("customSecInput").focus();
+      }
+    }
+
+    function applyCustomSeconds() {
+      let val = parseInt(document.getElementById("customSecInput").value, 10);
+      if (isNaN(val) || val < 10) val = 10;
+      if (val > 600) val = 600;
+      state.turnDuration = val;
+      updateTimerSettingsUI();
+      saveState();
+      showToast(`Turn timer set to ${val}s`);
+    }
+
+    function updateTimerSettingsUI() {
+      document.getElementById("selectedTimerLabel").textContent = `${state.turnDuration} Seconds`;
+      const presets = [45, 60, 90, 120];
+      const isPreset = presets.includes(state.turnDuration);
+
+      document.querySelectorAll(".timer-presets .chip-btn[data-sec]").forEach((btn) => {
+        btn.classList.toggle("active", Number(btn.dataset.sec) === state.turnDuration);
+      });
+      document.getElementById("customChipBtn").classList.toggle("active", !isPreset);
+    }
+
+    /* ==========================================================================
+       PASS-AND-PLAY PRIVACY SCREEN
+       ========================================================================== */
+    function goToPrivacyScreen() {
+      if (state.currentTeamIdx >= state.teamCount) {
+        state.currentTeamIdx = 0;
+      }
+      const currentTeam = state.teams[state.currentTeamIdx];
+      document.getElementById("privacyTeamName").textContent = currentTeam.name;
+      document.getElementById("privacyTeamName").style.color = TEAM_COLORS[state.currentTeamIdx];
+
+      let miniHtml = "";
+      for (let i = 0; i < state.teamCount; i++) {
+        const t = state.teams[i];
+        const isCurrent = i === state.currentTeamIdx;
+        miniHtml += `
+          <div class="mini-score-chip ${isCurrent ? "active-team" : ""}">
+            <span class="team-dot" style="background: ${TEAM_COLORS[i]};"></span>
+            <span>${escapeHTML(t.name)}:</span>
+            <strong style="color: var(--amber-bright);">${t.score}</strong>
+          </div>
+        `;
+      }
+      document.getElementById("privacyMiniScores").innerHTML = miniHtml;
+      showScreen("privacyScreen");
+    }
+
+    /* ==========================================================================
+       PURE RANDOM NON-REPEATING CARD DRAW ENGINE
+       ========================================================================== */
+    function drawRandomCard() {
+      const playedSet = new Set(state.playedCardIds);
+      let available = UNIQUE_DECK.filter((c) => !playedSet.has(c.id));
+
+      if (available.length === 0) {
+        // Exhausted all 630 cards — auto reset so game continues seamlessly
+        state.playedCardIds = [];
+        available = [...UNIQUE_DECK];
+        showToast("All 630 cards played! Shuffled fresh deck.");
+      }
+
+      // True uniform random pick from remaining unplayed cards
+      const randomIndex = Math.floor(Math.random() * available.length);
+      const chosenCard = available[randomIndex];
+
+      state.playedCardIds.push(chosenCard.id);
+      saveState();
+      updateDeckCounters();
+      return chosenCard;
+    }
+
+    function renderActiveCard(card) {
+      const cardEl = document.getElementById("tabooCard");
+      const targetEl = document.getElementById("targetWordText");
+      const listEl = document.getElementById("forbiddenList");
+
+      targetEl.textContent = card.target;
+      listEl.innerHTML = card.forbidden.map((word) => `
+        <div class="forbidden-word-item">
+          <span class="forbidden-ban-dot">✕</span>
+          <span>${escapeHTML(word)}</span>
+        </div>
+      `).join("");
+
+      // Trigger subtle pop animation
+      cardEl.classList.remove("card-pop");
+      void cardEl.offsetWidth; // Force reflow
+      cardEl.classList.add("card-pop");
+    }
+
+    /* ==========================================================================
+       ACTIVE TURN GAMEPLAY & TIMER
+       ========================================================================== */
+    function startTurn() {
+      ensureAudio();
+
+      turnState = {
+        timeLeft: state.turnDuration,
+        running: true,
+        paused: false,
+        currentCard: drawRandomCard(),
+        history: []
+      };
+
+      const activeTeam = state.teams[state.currentTeamIdx];
+      document.getElementById("activeTeamLabel").textContent = activeTeam.name;
+      document.getElementById("pauseVeil").classList.remove("visible");
+
+      renderActiveCard(turnState.currentCard);
+      updateActiveHUD();
+      showScreen("activeScreen");
+
+      startTurnClock();
+    }
+
+    function startTurnClock() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (!turnState.running || turnState.paused) return;
+
+        turnState.timeLeft -= 1;
+
+        if (turnState.timeLeft <= 5 && turnState.timeLeft > 0) {
+          playWarningTick(true);
+        } else if (turnState.timeLeft <= 10 && turnState.timeLeft > 5) {
+          playWarningTick(false);
+        }
+
+        if (turnState.timeLeft <= 0) {
+          turnState.timeLeft = 0;
+          updateActiveHUD();
+          playEndBuzzer();
+          completeTurn();
+          return;
+        }
+
+        updateActiveHUD();
+      }, 1000);
+    }
+
+    function updateActiveHUD() {
+      const gotCount = turnState.history.filter((h) => h.status === "got").length;
+      document.getElementById("activeTurnScore").textContent = `+${gotCount} pt${gotCount === 1 ? "" : "s"}`;
+
+      const timerEl = document.getElementById("activeTimerDisplay");
+      timerEl.textContent = turnState.timeLeft;
+      timerEl.classList.toggle("urgent", turnState.timeLeft <= 10);
+    }
+
+    function handleGotItCard() {
+      if (!turnState.running || turnState.paused) return;
+      playGotItChime();
+      turnState.history.push({ card: turnState.currentCard, status: "got" });
+      turnState.currentCard = drawRandomCard();
+      renderActiveCard(turnState.currentCard);
+      updateActiveHUD();
+    }
+
+    function handleSkipCard() {
+      if (!turnState.running || turnState.paused) return;
+      playSkipClick();
+      turnState.history.push({ card: turnState.currentCard, status: "skipped" });
+      turnState.currentCard = drawRandomCard();
+      renderActiveCard(turnState.currentCard);
+      updateActiveHUD();
+    }
+
+    function pauseGameTurn() {
+      if (!turnState.running) return;
+      turnState.paused = true;
+      document.getElementById("pauseVeil").classList.add("visible");
+    }
+
+    function resumeGameTurn() {
+      turnState.paused = false;
+      document.getElementById("pauseVeil").classList.remove("visible");
+    }
+
+    function endTurnEarly() {
+      completeTurn();
+    }
+
+    function completeTurn() {
+      turnState.running = false;
+      turnState.paused = false;
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      // Note: The final unguessed card on screen when the buzzer went off is NOT counted
+      renderTurnSummary();
+      showScreen("summaryScreen");
+    }
+
+    /* ==========================================================================
+       END-OF-TURN SUMMARY & DISPUTE ADJUSTMENTS
+       ========================================================================== */
+    function renderTurnSummary() {
+      const team = state.teams[state.currentTeamIdx];
+      const earned = turnState.history.filter((h) => h.status === "got").length;
+
+      document.getElementById("summaryTeamTitle").textContent = `${team.name} Earned`;
+      document.getElementById("summaryPointsBig").textContent = `+${earned}`;
+
+      const logEl = document.getElementById("turnLogList");
+      if (turnState.history.length === 0) {
+        logEl.innerHTML = `
+          <div style="text-align: center; color: var(--text-muted); padding: 28px 12px;">
+            No cards completed on this turn.
+          </div>
+        `;
+        return;
+      }
+
+      logEl.innerHTML = turnState.history.map((entry, idx) => {
+        const isGot = entry.status === "got";
+        return `
+          <div class="log-item">
+            <span class="log-word">${escapeHTML(entry.card.target)}</span>
+            <button
+              class="log-toggle-btn ${isGot ? "got" : "skipped"}"
+              onclick="toggleHistoryItem(${idx})"
+            >
+              ${isGot ? "✓ +1 pt" : "✕ 0 pt"}
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function toggleHistoryItem(idx) {
+      const item = turnState.history[idx];
+      if (!item) return;
+      item.status = item.status === "got" ? "skipped" : "got";
+      renderTurnSummary();
+    }
+
+    function commitTurnPoints() {
+      const earned = turnState.history.filter((h) => h.status === "got").length;
+      state.teams[state.currentTeamIdx].score += earned;
+      state.currentTeamIdx = (state.currentTeamIdx + 1) % state.teamCount;
+      saveState();
+      renderTeamsEditor();
+    }
+
+    function finishTurnAndNextTeam() {
+      commitTurnPoints();
+      goToPrivacyScreen();
+    }
+
+    function finishTurnAndGoHome() {
+      commitTurnPoints();
+      showScreen("setupScreen");
+    }
+
+    /* ==========================================================================
+       MODALS, RESETS & UTILITIES
+       ========================================================================== */
+    function openModal(id) {
+      document.getElementById(id).classList.add("open");
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("open");
+    }
+
+    function closeModalOnBg(event, id) {
+      if (event.target.id === id) closeModal(id);
+    }
+
+    function openConfirmModal(type) {
+      const titleEl = document.getElementById("confirmTitle");
+      const descEl = document.getElementById("confirmDesc");
+      const actionBtn = document.getElementById("confirmActionBtn");
+
+      if (type === "scores") {
+        titleEl.textContent = "Reset All Team Scores?";
+        descEl.textContent = "All team scores will be set back to 0. Your played card history will remain intact.";
+        actionBtn.onclick = () => {
+          state.teams.forEach((t) => (t.score = 0));
+          state.currentTeamIdx = 0;
+          saveState();
+          renderTeamsEditor();
+          closeModal("confirmModal");
+          showToast("Scores reset to 0.");
+        };
+      } else {
+        titleEl.textContent = "Reset Played Card Deck?";
+        descEl.textContent = `All ${UNIQUE_DECK.length} cards will be reshuffled back into the active pool.`;
+        actionBtn.onclick = () => {
+          state.playedCardIds = [];
+          saveState();
+          updateDeckCounters();
+          closeModal("confirmModal");
+          showToast(`Deck reset (${UNIQUE_DECK.length} cards ready).`);
+        };
+      }
+      openModal("confirmModal");
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove("show"), 2500);
+    }
+
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    /* ==========================================================================
+       INITIALIZATION
+       ========================================================================== */
+    window.addEventListener("DOMContentLoaded", () => {
+      loadState();
+      renderTeamsEditor();
+      updateTimerSettingsUI();
+      updateMuteUI();
+      updateDeckCounters();
+    });
+  </script>
+</body>
+</html>
